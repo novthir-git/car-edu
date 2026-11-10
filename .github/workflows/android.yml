@@ -1,0 +1,90 @@
+# 安卓应用：每次推送都跑测试、编译 APK；合并到 main 时，打包签名好的 APK 和热更新包，发布到 GitHub Releases。
+# 平板上的应用从“最新发布”里下载热更新包（见 android/README.md）。
+name: 安卓应用
+
+on:
+  push:
+    paths: ['index.html', 'app/**', 'content/**', 'android/**', 'tests/**', '.github/workflows/android.yml']
+  pull_request:
+    paths: ['index.html', 'app/**', 'content/**', 'android/**', 'tests/**', '.github/workflows/android.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: 测试和编译
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: 安装 Playwright
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: 冒烟测试
+        run: node tests/smoke.js
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - name: 外壳的单元测试，编译调试版 APK
+        working-directory: android
+        run: ./gradlew --no-daemon testDebugUnitTest assembleDebug
+
+  release:
+    name: 发布到 GitHub Releases
+    needs: check
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: android-release
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - name: 取出签名钥匙
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ]; then
+            echo "::error::还没有配置签名钥匙。请按 android/README.md，在仓库的 Settings → Secrets and variables → Actions 里加 ANDROID_KEYSTORE_BASE64 和 ANDROID_KEYSTORE_PASSWORD。"
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          echo "CE_KEYSTORE=$RUNNER_TEMP/release.keystore" >> "$GITHUB_ENV"
+      - name: 打包签名的 APK 和热更新包
+        working-directory: android
+        env:
+          CE_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: ./gradlew --no-daemon assembleRelease webUpdate
+      - name: 发布
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          out=android/app/build/outputs
+          cp "$out/apk/release/app-release.apk" car-edu.apk
+          when=$(git log -1 --format=%cd --date=format:'%Y-%m-%d %H:%M')
+          tag="build-${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT}-${GITHUB_SHA::7}"
+          {
+            echo "内容版本：$when（${GITHUB_SHA::7}）"
+            echo
+            echo "$(git log -1 --format=%s)"
+            echo
+            echo "- 第一次安装：在平板上下载 car-edu.apk 安装（要允许“安装未知应用”）。"
+            echo "- 已经装过的：应用打开时会自己下载新内容，下次打开时换上；家长页 → 应用 里可以手动“检查更新”。"
+            echo "- www.zip、version.json、version.sig 是给应用热更新用的，不用下载。"
+          } > notes.md
+          gh release create "$tag" car-edu.apk "$out/web-update/www.zip" "$out/web-update/version.json" "$out/web-update/version.sig" \
+            --title "$when" --notes-file notes.md --latest

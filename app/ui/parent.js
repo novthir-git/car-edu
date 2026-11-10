@@ -92,8 +92,10 @@
   }
 
   // 声音的好坏取决于设备里装了哪些语音，网页没法自己下载，只能请家长在设备上装好
-  const VOICE_TIP = 'iPad / iPhone：设置 → 辅助功能 → 朗读内容 → 声音 → 中文（中国大陆），下载带“优化”或“高品质”的声音，回来刷新页面。' +
-    '电脑：用 Edge 浏览器打开，有自然的“晓晓”声音。安卓：在“文字转语音”设置里选 Google 引擎并下载普通话。';
+  const VOICE_TIP = CE.Native
+    ? '点下面的“系统语音设置”，在“首选引擎”里选一个中文好的（例如 Google 语音服务、讯飞），在引擎的设置里下载普通话语音包。回到这里会自动刷新。'
+    : 'iPad / iPhone：设置 → 辅助功能 → 朗读内容 → 声音 → 中文（中国大陆），下载带“优化”或“高品质”的声音，回来刷新页面。' +
+      '电脑：用 Edge 浏览器打开，有自然的“晓晓”声音。安卓：在“文字转语音”设置里选 Google 引擎并下载普通话。';
 
   function settings() {
     const st = S.data.settings, sp = CE.Speech;
@@ -103,9 +105,10 @@
         const tag = q >= 7 ? '，自然' : q < 0 ? '，较机械' : '';
         return `<option value="${U.esc(key)}" ${key === cur || v.name === cur ? 'selected' : ''}>${U.esc(v.name)}（${U.esc(v.lang)}${tag}）</option>`;
       }).join('');
+    const engine = CE.Native ? `朗读引擎：${U.esc(CE.Native.info().engine || '没有找到')}。` : '';
     const status = !sp.supported ? '这个浏览器不支持语音朗读。屏幕上会显示文字，需要您读给孩子听。'
-      : !sp.zh ? '没有找到中文语音。可以点下面的“试听”确认；如果没有声音，需要您读给孩子听，或换一台设备/浏览器。'
-        : `中文语音：${U.esc(sp.zh.name)}；英文语音：${sp.en ? U.esc(sp.en.name) : '没有找到'}`;
+      : !sp.zh ? engine + '没有找到中文语音。可以点下面的“试听”确认；如果没有声音，需要您读给孩子听，或换一台设备/浏览器。'
+        : engine + `中文语音：${U.esc(sp.zh.name)}；英文语音：${sp.en ? U.esc(sp.en.name) : '没有找到'}`;
     return `<div class="form">` +
       `<label>孩子的名字（问好时会叫他）<input type="text" data-k="name" value="${U.esc(st.name)}" maxlength="12"></label>` +
       `<label>每天使用上限（分钟，0 表示不限）<input type="number" data-k="minutes" min="0" max="120" value="${Number(st.minutes) || 0}"></label>` +
@@ -114,7 +117,8 @@
       `<label>中文语音 <select data-k="voiceZh">${sel(sp.zhList, st.voiceZh)}</select></label>` +
       `<label>英文语音 <select data-k="voiceEn">${sel(sp.enList, st.voiceEn)}</select></label>` +
       `<p class="muted">${status}</p>` +
-      `<div class="row"><button class="btn sm" data-act="try-zh">试听中文</button><button class="btn sm" data-act="try-en">试听英文</button></div>` +
+      `<div class="row"><button class="btn sm" data-act="try-zh">试听中文</button><button class="btn sm" data-act="try-en">试听英文</button>` +
+        (CE.Native ? `<button class="btn sm" data-act="tts">系统语音设置</button>` : '') + `</div>` +
       (sp.zh && sp.quality(sp.zh) < 5 ? `<p class="warn">现在用的中文语音比较机械。${VOICE_TIP}</p>` : `<p class="muted">声音听着机械的话：${VOICE_TIP}</p>`) +
       `</div>`;
   }
@@ -145,8 +149,26 @@
       `<p class="muted">后面的内容先不做，等看到他的反应再决定方向和比例。升到下一个年级时，再定下一个年级的大纲。</p>`;
   }
 
+  // 安卓应用：外壳和内容的版本、检查更新。更新包放在哪里、怎么签名，见 android/README.md
+  function appInfo() {
+    const i = CE.Native.info(), c = i.content || {}, st = i.staged;
+    const time = ms => new Date(ms).toLocaleString('zh-CN', { hour12: false });
+    const ver = x => (x.v ? time(x.v * 1000) : '—') + (x.sha ? `（${U.esc(x.sha)}）` : '');
+    return `<p>应用（外壳）第 ${U.esc(i.shell)} 版。内容：${ver(c)}，${c.from === 'update' ? '下载的更新' : '应用自带'}。</p>` +
+      (st ? `<p class="warn">新内容 ${ver(st)} 已经下载好，下次打开应用时换上。<button class="btn sm" data-act="apply">现在换上</button></p>` : '') +
+      `<p class="muted">${i.checking ? '正在检查更新……' : `上次检查：${i.last ? time(i.last) : '还没有'}。${U.esc(i.msg || '')}`}</p>` +
+      `<div class="form"><label>自己的更新地址（可以不填。想从别的地方下载更新时，例如家里的 NAS，一行写一个，按顺序试）` +
+        `<textarea data-k="sources" rows="2" placeholder="不填就从下面的默认地址下载">${U.esc((i.sources || []).join('\n'))}</textarea></label></div>` +
+      ((i.builtin || []).length ? `<p class="muted">默认地址：${i.builtin.map(U.esc).join('、')}</p>` : '') +
+      `<div class="row"><button class="btn sm" data-act="check" ${i.checking ? 'disabled' : ''}>检查更新</button></div>` +
+      `<p class="muted">应用每次打开时会在后台查一下有没有新内容，只下载，不上传任何记录。更新包带签名，签名对不上的不会换上，所以地址用 http 也可以。` +
+      `新内容不会在孩子玩到一半时换上，要等下次打开应用，或者离开半小时以上再回来。外壳本身要更新时，这里会提示去下载新的应用（APK）安装。</p>`;
+  }
+
   function data() {
-    return `<p>所有记录只保存在这台设备的这个浏览器里，不会上传。换设备前请先导出。</p>` +
+    return (CE.Native
+      ? `<p>所有记录只保存在这台设备的这个应用里，不会上传。卸载应用会把记录一起删掉；换设备、卸载重装之前请先导出。</p>`
+      : `<p>所有记录只保存在这台设备的这个浏览器里，不会上传。换设备前请先导出。</p>`) +
       `<div class="row"><button class="btn sm" data-act="export">导出记录</button>` +
       `<label class="btn sm filebtn">导入记录<input type="file" accept="application/json,.json" data-act="import" hidden></label>` +
       `<button class="btn sm danger" data-act="reset">清空记录</button></div>` +
@@ -158,8 +180,8 @@
 
   const SECTIONS = [
     ['ov', '概览', overview], ['in', '兴趣观察', interest], ['zh', '识字', zh], ['ma', '数学', math], ['en', '英语', en],
-    ['pr', '打印', prints], ['yr', '大纲', outline], ['st', '设置', settings], ['da', '数据', data]
-  ];
+    ['pr', '打印', prints], ['yr', '大纲', outline], ['st', '设置', settings]
+  ].concat(CE.Native ? [['ap', '应用', appInfo]] : [], [['da', '数据', data]]);
 
   Pa.show = function (app) {
     if (!Pa.ok && !CE.TEST) {
@@ -168,6 +190,11 @@
       return;
     }
     Pa.render(app);
+  };
+
+  // 安卓外壳通知声音或更新的状态变了：家长页正开着（已经过了验证）就重画一遍
+  Pa.refresh = function () {
+    if (U.$('#sec-st')) Pa.render(U.$('#app'));
   };
 
   Pa.render = function (app) {
@@ -191,6 +218,7 @@
     }));
     U.$$('[data-k]', app).forEach(inp => inp.addEventListener('change', () => {
       const k = inp.dataset.k;
+      if (k === 'sources') { CE.Native.setSources(inp.value); return; }   // 存在外壳里，不在学习记录里
       if (k === 'notes') S.data.notes = inp.value;
       else if (inp.type === 'checkbox') S.data.settings[k] = inp.checked;
       else if (inp.type === 'number' || inp.type === 'range') S.data.settings[k] = Number(inp.value);
@@ -204,8 +232,13 @@
       home: () => U.go('#/'),
       'try-zh': () => CE.Speech.say('你好！我是小风。我们一起去车车镇吧！'),
       'try-en': () => CE.Speech.say([{ t: 'Hello! A red car, a blue bus, a yellow truck.', lang: 'en' }]),
+      tts: () => CE.Native.tts.settings(),
+      check: () => CE.Native.checkUpdate(),
+      apply: () => CE.Native.applyUpdate(),
       export: () => {
         S.flush();
+        // 安卓应用里 WebView 不能下载文件，交给系统，让家长选存在哪里
+        if (CE.Native) { CE.Native.saveText('car-edu-record.json', 'application/json', JSON.stringify(S.data, null, 2)); return; }
         if (CE.EMBED) {   // 预览环境不允许下载文件，改成显示出来让家长复制
           const out = U.$('#data-out', app);
           out.value = JSON.stringify(S.data);

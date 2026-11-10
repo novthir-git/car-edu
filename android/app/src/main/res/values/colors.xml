@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 和网页的 theme-color 一样，打开时不闪白 -->
+    <color name="sky">#BFE8FF</color>
+</resources>

@@ -168,6 +168,7 @@
       `</div>`;
     U.$('.back', app).addEventListener('click', () => U.go('#/parent'));
     const go = U.$('.go', app);
-    if (go) go.addEventListener('click', () => window.print());
+    // 安卓应用里 WebView 不能直接打印，交给系统的打印（可以选打印机，也可以存成 PDF）
+    if (go) go.addEventListener('click', () => (CE.Native ? CE.Native.print(it.t) : window.print()));
   };
 })(window.CE);

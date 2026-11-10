@@ -30,9 +30,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 python3 -m http.server 8000          # 本地运行，然后打开 http://localhost:8000
 node tests/smoke.js                  # 冒烟测试（需要 playwright），约 45 秒
 node --check content/k2/w01.js       # 单个文件的语法检查
+cd android && ./gradlew testDebugUnitTest assembleDebug   # 安卓外壳：单元测试和调试版 APK（需要 JDK 17+、Android SDK）
 ```
 
-`tests/smoke.js` 是唯一的测试：自己起一个静态服务器，用无头浏览器把每一天的每个活动真的玩到结束，再打开家长页和每份打印材料，期间有任何页面报错就失败。它还会检查 `app/` 和 `content/` 下的每个 `.js` 都在 `index.html` 里加载了、周安排里的活动都登记过、每一周的三条路（屏幕、纸、给家长的一页）都齐、每张打印的纸内容没有超出纸面。没有“只跑一个用例”的开关；要单独看某个活动，直接打开：
+网页没有构建步骤；`android/` 的 Gradle 只管安卓外壳，打包时把网页原样复制进 APK。
+
+`tests/smoke.js` 是网页唯一的测试：自己起一个静态服务器，用无头浏览器把每一天的每个活动真的玩到结束，再打开家长页和每份打印材料，期间有任何页面报错就失败。最后它换一个假的安卓外壳（`window.CEAndroid`），检查朗读、打印、导出、更新是不是交给了外壳。它还会检查 `app/` 和 `content/` 下的每个 `.js` 都在 `index.html` 里加载了、周安排里的活动都登记过、每一周的三条路（屏幕、纸、给家长的一页）都齐、每张打印的纸内容没有超出纸面。没有“只跑一个用例”的开关；要单独看某个活动，直接打开：
 
 ```
 http://localhost:8000/?test=1#/play/<活动id>?f=1
@@ -58,6 +61,8 @@ docs/systems.md       依据什么：业界体系的对照，备查
 docs/growth-log.md    他现在怎么样：成长记录，跨年级，按时间追加
 docs/<年级>/plan.md   这一年教什么：这个年级的大纲
 tests/smoke.js        冒烟测试
+android/              安卓应用的外壳（见下面“安卓应用”和 android/README.md）
+.github/workflows/    每次推送跑测试；合并到 main 时发布签名的 APK 和热更新包到 GitHub Releases
 ```
 
 年级代号：`k1` 小班、`k2` 中班、`k3` 大班、`g1` 一年级，往后类推。现在只有 `k2`。
@@ -145,7 +150,7 @@ library 里，字库和词库（`zh-chars.js`、`en-words.js`）要排在用它�
 
 ### 语音
 
-`app/core/speech.js` 用浏览器自带的语音合成，音效用 WebAudio 现场合成，仓库里没有音频文件。`Speech.say()` 接受字符串或分段数组（`{t, lang: 'en'}` 切换英文），返回 Promise。每段都有估算时长的兜底定时器，因为有些设备不触发 `onend`——流程不能依赖语音事件。浏览器要求先有一次点击才能出声，开场的 `Splash` 就是为此存在。
+`app/core/speech.js` 用浏览器自带的语音合成（安卓应用里换成系统的朗读，见下面“安卓应用”），音效用 WebAudio 现场合成，仓库里没有音频文件。`Speech.say()` 接受字符串或分段数组（`{t, lang: 'en'}` 切换英文），返回 Promise。每段都有估算时长的兜底定时器，因为有些设备不触发 `onend`——流程不能依赖语音事件。浏览器要求先有一次点击才能出声，开场的 `Splash` 就是为此存在。
 
 ### 画面
 
@@ -158,6 +163,16 @@ library 里，字库和词库（`zh-chars.js`、`en-words.js`）要排在用它�
 ### 打印
 
 版式在 `app/ui/print.js` + `app/css/print.css`，尺寸用毫米，按 A4 纵向设计，每个 `.sheet` 正好一页（高 296mm，超出的内容会被裁掉，冒烟测试会查）。辅助线用边框而不是背景画，因为打印默认不带背景图形。印哪些材料由内容文件登记，版式函数（`Pr.family`、`Pr.book`、`Pr.trace`、`Pr.count`、`Pr.compare`、`Pr.cards`、`Pr.coloring`、`Pr.roads`）各自注明了一页最多放多少。`Pr.items()` 是全部能打印的东西：登记的材料，加上每周自动带的“给家长”一页。涂色的活动和它的打印页用同一个 id（`color-xiaofeng`）。
+
+## 安卓应用
+
+`android/` 是一个很薄的外壳（Kotlin）：全屏 WebView 打开 APK 里自带的网页，补上 WebView 做不到的四样：朗读（系统 TTS）、打印（系统打印）、保存和选择文件、热更新。细节在 `android/README.md`。
+
+- **网页只通过 `CE.Native` 用外壳**（`app/core/native.js`，对面是外壳的 `Bridge`）。在浏览器里 `CE.Native` 是 null，代码照常走浏览器的路。要用外壳的地方先判断 `CE.Native`，不要直接碰 `window.CEAndroid`。改这个约定时，`Bridge` 和冒烟测试里的假外壳一起改。
+- **热更新只换网页**（`index.html`、`app/`、`content/`）。合并到 main 后 GitHub Actions 发布签名的更新包，应用自己下载，下次打开时换上。所以加内容、改玩法都不用碰 `android/`。
+- **外壳版本 `shell`**（`android/app/build.gradle.kts`）：改了外壳、而且网页要用到新能力时才加一。之后的更新包旧外壳不接收，家长要重装 APK，所以能在网页里做的就不要放进外壳。
+- **发布后不能改**：`applicationId`（`com.caredu.app`）、网页的地址 `https://appassets.androidplatform.net/www/`（学习记录存在这个地址的 localStorage 里）、签名钥匙（存在 GitHub Secrets；换了就只能卸载重装）。
+- 学习记录在应用里和在浏览器里不相通，要导出再导入。卸载应用会删掉记录。
 
 ## 已知的、等内容多了要改的地方
 
