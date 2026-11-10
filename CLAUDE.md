@@ -166,7 +166,7 @@ library 里，字库和词库（`zh-chars.js`、`en-words.js`）要排在用它�
 
 ## 安卓应用
 
-`android/` 是一个很薄的外壳：全屏 WebView 打开 APK 里自带的网页，补上 WebView 做不到的四样：朗读（系统 TTS）、打印（系统打印）、保存和选择文件、热更新。细节在 `android/README.md`。
+`android/` 是一个很薄的外壳（Kotlin）：全屏 WebView 打开 APK 里自带的网页，补上 WebView 做不到的四样：朗读（系统 TTS）、打印（系统打印）、保存和选择文件、热更新。细节在 `android/README.md`。
 
 - **网页只通过 `CE.Native` 用外壳**（`app/core/native.js`，对面是外壳的 `Bridge`）。在浏览器里 `CE.Native` 是 null，代码照常走浏览器的路。要用外壳的地方先判断 `CE.Native`，不要直接碰 `window.CEAndroid`。改这个约定时，`Bridge` 和冒烟测试里的假外壳一起改。
 - **热更新只换网页**（`index.html`、`app/`、`content/`）。合并到 main 后 GitHub Actions 发布签名的更新包，应用自己下载，下次打开时换上。所以加内容、改玩法都不用碰 `android/`。

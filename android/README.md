@@ -1,6 +1,6 @@
 # 安卓应用（外壳）
 
-一个很薄的外壳：全屏的 WebView，打开 APK 里自带的网页。网页就是仓库根目录的 `index.html`、`app/`、`content/`，打包时原样复制进 APK，这里不另存一份。
+一个很薄的外壳（Kotlin）：全屏的 WebView，打开 APK 里自带的网页。网页就是仓库根目录的 `index.html`、`app/`、`content/`，打包时原样复制进 APK，这里不另存一份。
 
 WebView 有四样做不到，由外壳补上：
 
@@ -19,7 +19,7 @@ WebView 有四样做不到，由外壳补上：
 app/build.gradle.kts        打包：版本、签名、把网页复制进 APK、打热更新包（webUpdate）
 app/src/main/
   AndroidManifest.xml
-  java/com/caredu/app/
+  kotlin/com/caredu/app/    外壳用 Kotlin 写
     MainActivity            WebView、全屏、返回键、打印、存取文件、什么时候换上新内容
     Bridge                  网页能调用的方法（页面上的 window.CEAndroid）
     Speech                  朗读

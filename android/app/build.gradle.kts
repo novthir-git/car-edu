@@ -9,7 +9,7 @@ plugins {
     id("com.android.application")
 }
 
-/* 外壳的版本。只在改了 Java 代码、而且网页要用到新能力（app/core/native.js 里新加的东西）时才加一。
+/* 外壳的版本。只在改了外壳的代码、而且网页要用到新能力（app/core/native.js 里新加的东西）时才加一。
    打出来的更新包只给这个版本以上的外壳用：旧外壳的家长页会提示先装新的 APK。 */
 val shell = 1
 
