@@ -12,7 +12,7 @@
     settings: { name: '', rate: 0.9, minutes: 15, sfx: true, voiceZh: '', voiceEn: '' },
     items: {},    // 每个知识点（字、数字、单词）的作答记录
     acts: {},     // 每个活动的累计记录
-    days: {},     // 每天任务的完成情况
+    days: {},     // 每一站（每天三个活动）玩过哪些
     levels: {},   // 可升级活动的当前难度
     colors: {},   // 涂色作品
     log: [],      // 每次进入活动的流水，用来看兴趣

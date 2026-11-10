@@ -30,16 +30,20 @@ function notLoaded() {
   return walk('app').concat(walk('content')).filter(f => html.indexOf(`src="${f}"`) < 0);
 }
 
-async function play(page, base, act, query) {
+// first：进活动后先点一下的按钮（用来走不是默认的那条路）
+async function play(page, base, act, query, first) {
   await page.goto(`${base}/?test=1#/play/${act}?${query}`);
   // 页面切换是异步的：等上一个活动的结果弹窗消失、这个活动真的打开了再开始点
   await page.waitForFunction(() => document.querySelector('.act-body') && !document.querySelector('.result'));
+  if (first) await page.click(first);
   for (let i = 0; i < 600; i++) {
     if (await page.$('.result')) {
       await page.click('.result .ok');
       await page.waitForFunction(() => !document.querySelector('.result'));
       return;
     }
+    // 有的活动结束时不弹结果（去纸上涂色），直接回到上一页
+    if (!(await page.$('.act'))) return;
     const el = await page.$('[data-tn]');
     // 点击可能失败（题目刚换、元素已被替换），下一轮会重新找
     if (!el) { await page.waitForTimeout(15); continue; }
@@ -71,6 +75,9 @@ async function play(page, base, act, query) {
   const unknown = await page.evaluate(() =>
     [].concat(...CE.WEEKS.map(w => [].concat(...w.days, w.extra))).filter(a => !CE.ACTS[a]));
   if (unknown.length) throw new Error('周安排里用了没登记的活动：' + unknown.join(', '));
+  const noPrint = await page.evaluate(() =>
+    [].concat(...CE.WEEKS.map(w => w.prints)).filter(id => !CE.Print.LIST.some(p => p.id === id)));
+  if (noPrint.length) throw new Error('周文件的 prints 里有没登记的打印材料：' + noPrint.join(', '));
 
   let played = 0;
   for (const d of days) {
@@ -83,6 +90,10 @@ async function play(page, base, act, query) {
   await page.goto(base + '/?test=1#/free');
   await page.waitForSelector('.free-list .acard');
   for (const a of extras) { await play(page, base, a, 'f=1'); played++; }
+  // 涂色默认是去纸上涂；屏幕上涂是备用的路，单独走一遍
+  await play(page, base, 'color-xiaofeng', 'f=1', '.paper .plain'); played++;
+  const painted = await page.evaluate(() => Object.keys(CE.Store.data.colors.xiaofeng || {}).length);
+  if (!painted) fail('屏幕上涂色没有记录下颜色');
 
   const state = await page.evaluate(() => ({
     left: CE.Plan.current(), stars: CE.Store.stars(), log: CE.Store.data.log.length,
@@ -100,7 +111,8 @@ async function play(page, base, act, query) {
   await page.goto(base + '/?test=1#/parent');
   await page.waitForSelector('.doc .zgrid');
   await page.click('.zc');   // 手动标记一个字
-  const prints = await page.evaluate(() => CE.Print.LIST.map(p => p.id));
+  // 每一份打印材料，再加上每一周合在一起的那一份
+  const prints = await page.evaluate(() => CE.Print.LIST.map(p => p.id).concat(CE.WEEKS.map(w => 'week-' + w.id)));
   for (const id of prints) {
     await page.goto(`${base}/?test=1#/print/${id}`);
     await page.waitForSelector('.sheet');
@@ -108,7 +120,7 @@ async function play(page, base, act, query) {
 
   await browser.close();
   srv.close();
-  console.log(`玩了 ${played} 次活动（共 ${state.acts} 个活动），${state.stars} 颗星，记录了 ${state.zh} 个字，打开了 ${prints.length} 份打印材料。`);
+  console.log(`玩了 ${played} 次活动（共 ${state.acts} 个活动），${state.stars} 颗星，记录了 ${state.zh} 个字，打开了 ${prints.length} 份打印材料（含按周合并的）。`);
   if (errors.length) { console.error('失败：\n' + errors.join('\n')); process.exit(1); }
   console.log('通过');
 })().catch(e => { console.error(e); process.exit(1); });

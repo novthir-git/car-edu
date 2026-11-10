@@ -24,11 +24,13 @@
   def('traffic', { cat: 'safety', title: '红绿灯', icon: '🚦', sub: '红灯停，绿灯行，黄灯等一等', run: api => CE.Traffic.run(api) });
   def('wheel-lab', { cat: 'sci', title: '轮子实验室', icon: '🔬', sub: '试试圆、方、三角三种轮子', run: api => CE.Wheel.run(api) });
 
-  // 每个角色一个涂色游戏，再配一张同样线稿的打印涂色页
+  // 涂色以纸为主：每个角色一张打印的涂色页，屏幕上的活动只是让孩子去拿纸和笔。
+  // 活动和打印页用同一个 id。
   Object.keys(A.CHARS).forEach(k => {
     const name = A.CHARS[k].name;
-    def('color-' + k, { cat: 'art', title: '给' + name + '涂色', icon: '🎨', sub: '自由涂色，没有对错', run: api => CE.Coloring.run(api, k) });
+    def('color-' + k, { cat: 'art', title: '给' + name + '涂色', icon: '🖍️', sub: '在纸上涂，练握笔和控笔', run: api => CE.Coloring.paper(api, k) });
     Pr.add('涂色画画', 'color-' + k, '涂色：' + name, () => Pr.coloring(k));
   });
   Pr.add('涂色画画', 'draw-car', '画一辆我自己的车', Pr.drawCar);
+  Pr.add('写字描红', 'pen-roads', '控笔：沿着马路开车', Pr.roads);
 })(window.CE);

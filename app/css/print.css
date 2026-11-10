@@ -26,6 +26,13 @@
 .tz::after { top: 50%; left: 0; right: 0; border-top: .2mm dashed #999; }
 .tz.ghost { color: #cfcfcf; }
 
+/* 控笔 */
+.pen-row { display: flex; align-items: center; gap: 2mm; height: 40mm; border-bottom: .3mm dashed #bbb; }
+.pen-row .veh { width: 20mm; height: auto; flex: none; }
+.pen-row .veh [stroke-width] { stroke-width: 4.5; }
+.pen-road { flex: 1; height: 30mm; min-width: 0; }
+.pen-home { width: 15mm; height: 15mm; flex: none; }
+
 /* 数学 */
 .cnt-row, .cmp-row { display: flex; align-items: center; gap: 4mm; border-bottom: .3mm dashed #999; padding: 6mm 0; }
 .cnt-items { flex: 1; display: flex; flex-wrap: wrap; gap: 2mm; align-items: center; }

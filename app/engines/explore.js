@@ -123,6 +123,39 @@
     });
   };
 
+  /* 纸上涂色：涂色要练的是握笔和控笔，屏幕上点一下就填满，练不到。
+     所以屏幕只负责把孩子交给纸——点一下蜡笔就结束，不用回来“交差”，也不弹星星。
+     家里没有打印的纸时，可以改在屏幕上涂（C.run）。 */
+  C.paper = function (api, key) {
+    return new Promise(resolve => {
+      const who = A.CHARS[key];
+      api.host.innerHTML =
+        `<div class="paper">` +
+          `<div class="paper-sheet">${A.who(key, { line: true })}</div>` +
+          `<p class="paper-say">拿出${who.name}的涂色纸，用蜡笔给它涂上颜色。</p>` +
+          `<div class="paper-btns"><button class="btn crayon"><span>🖍️</span>去涂色</button>` +
+            `<button class="btn sm plain">没有纸，在屏幕上涂</button></div>` +
+          `<p class="paper-note">家长：涂色纸在“家长 → 打印”里，可以一周打印一次。</p>` +
+        `</div>`;
+      const say = () => CE.Speech.say(`这一样要用笔。请爸爸妈妈拿出${who.name}的涂色纸，你用蜡笔给它涂上颜色。准备好了，就点蜡笔。`);
+      api.replay(say);
+      api.onClose = () => resolve(null);
+      const go = U.$('.crayon', api.host);
+      if (CE.TEST) go.dataset.tn = '1';
+      go.addEventListener('click', async () => {
+        CE.Sfx.ok();
+        await CE.Speech.say('去吧！慢慢涂，涂成什么样都可以。');
+        if (!api.closed) resolve({ score: 0, total: 0, stars: 3, quiet: true });
+      });
+      U.$('.plain', api.host).addEventListener('click', () => {
+        CE.Sfx.tap();
+        CE.Speech.stop();
+        C.run(api, key).then(resolve);
+      });
+      say();
+    });
+  };
+
   /* ================= 轮子实验室 ================= */
   const W = CE.Wheel = {};
   const R = 22;                               // 轮子半径（车身坐标）

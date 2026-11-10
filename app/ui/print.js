@@ -13,6 +13,7 @@
     Pr.LIST.push({ g: g, id: id, t: t, f: f });
   };
 
+  const mini = kind => A.v(kind, { line: true, noFace: true });
   const sheet = html => `<section class="sheet">${html}</section>`;
   const head = (title, sub) =>
     `<div class="sh-head"><h2>${title}</h2><div class="sh-meta">名字：__________　日期：__________</div></div>` +
@@ -32,6 +33,25 @@
       `<path d="M6 218H184" stroke="${INK}" stroke-width="1.2" stroke-dasharray="10 8"/>${wheel(58)}${wheel(132)}</svg>`);
   };
 
+  // 控笔：沿着马路中间的虚线，从小车画到车库。线型由易到难：直、弯、折、拐、拱
+  Pr.roads = function () {
+    const INK = '#222';
+    const lines = [
+      'M4 15H146',
+      'M4 15Q21.75 -5 39.5 15T75 15T110.5 15T146 15',
+      'M4 23L24.3 7L44.6 23L64.9 7L85.2 23L105.5 7L125.8 23L146 7',
+      'M4 23H32V7H61V23H90V7H119V23H146',
+      'M4 25a17.75 17.75 0 0 1 35.5 0a17.75 17.75 0 0 1 35.5 0a17.75 17.75 0 0 1 35.5 0a17.75 17.75 0 0 1 35.5 0'
+    ];
+    const home = `<svg class="pen-home" viewBox="0 0 24 24"><path d="M2 11L12 3L22 11V22H2Z" fill="#fff" stroke="${INK}" stroke-width="1.2" stroke-linejoin="round"/>` +
+      `<path d="M7 22V14H17V22" fill="none" stroke="${INK}" stroke-width="1.2" stroke-linejoin="round"/></svg>`;
+    return sheet(head('开车回家', '用笔沿着马路中间的虚线，把小车开回家。慢慢开。') +
+      lines.map(d => `<div class="pen-row">${mini('car')}<svg class="pen-road" viewBox="0 0 150 30">` +
+        `<path d="${d}" fill="none" stroke="#e4e4e4" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>` +
+        `<path d="${d}" fill="none" stroke="#777" stroke-width=".5" stroke-dasharray="2.4 2" stroke-linejoin="round"/></svg>${home}</div>`).join('') +
+      `<p class="sh-sub mt">给家长：一次画一两行就够，画出马路也没关系。</p>`);
+  };
+
   const tz = (c, cls) => `<div class="tz ${cls || ''}">${c || ''}</div>`;
   const traceRow = (lab, sub, c) =>
     `<div class="trace-row"><div class="trace-lab"><b>${lab}</b><span>${sub}</span></div>` +
@@ -49,7 +69,6 @@
     return page(1, 5) + page(6, 10);
   };
 
-  const mini = kind => A.v(kind, { line: true, noFace: true });
   // 数一数。rows 每行是 [几辆, 哪种车]，一页最多 6 行
   Pr.count = function (rows) {
     return sheet(head('数一数，写数字', '每一行有几辆车？数一数，把数字写在方框里。') +
@@ -84,8 +103,21 @@
       `</div>`);
   };
 
+  // 一周要用的纸合成一份，一次打印出来。周文件里的 prints 列出这一周用哪些
+  Pr.week = function (w) {
+    return {
+      id: 'week-' + w.id, t: `第 ${w.n} 周要用的纸：${w.title}`,
+      f: () => (w.prints || []).map(id => {
+        const it = Pr.LIST.find(x => x.id === id);
+        if (!it) throw new Error(`第 ${w.n} 周要打印的材料没有登记：` + id);
+        return it.f();
+      }).join('')
+    };
+  };
+
   Pr.show = function (app, id) {
-    const it = Pr.LIST.find(x => x.id === id);
+    const wk = CE.WEEKS.find(w => 'week-' + w.id === id);
+    const it = wk ? Pr.week(wk) : Pr.LIST.find(x => x.id === id);
     if (!it) return U.go('#/parent');
     app.innerHTML =
       `<div class="print-view">` +

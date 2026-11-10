@@ -56,10 +56,11 @@
       ['add-intro', 'en-phrases', 'learn-zh-more'],
       ['find-zh', 'give-n', 'color-atu']
     ],
-    extra: ['color-dashan', 'color-xiaoshui']
+    extra: ['color-dashan', 'color-xiaoshui'],
+    prints: ['color-atu', 'color-dashan', 'color-xiaoshui', 'draw-car', 'book-2', 'trace-w2', 'trace-num', 'count-2', 'cards-en-2']
   });
 
-  /* ---------- 打印材料 ---------- */
+  /* ---------- 这一周自己的打印材料 ---------- */
   Pr.add('故事绘本', 'book-2', '绘本：大石头挡路了（6 页纸）', () => Pr.book(story, 2));
   Pr.add('写字描红', 'trace-w2', '描红：石 上 下 来 去', () => Pr.trace('描红 · 第 2 周的字', story.chars));
   Pr.add('数学练习', 'count-2', '比多少，接着写', () => Pr.compare([[3, 5], [6, 4], [2, 6], [5, 6]], [1, 2, 3, 0, 0, 6, 0, 8, 0, 10]));

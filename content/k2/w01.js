@@ -61,10 +61,11 @@
       ['story-1-quiz', 'give-n', 'traffic'],
       ['find-num', 'learn-zh-w1b', 'en-colors'],
       ['find-zh', 'count-cars', 'color-xiaohuo']
-    ]
+    ],
+    prints: ['color-xiaofeng', 'color-xiaohuo', 'pen-roads', 'book-1', 'trace-w1', 'count-1', 'cards-en-1']
   });
 
-  /* ---------- 打印材料 ---------- */
+  /* ---------- 这一周自己的打印材料。id 要写进上面的 prints，家长才能按周一次打印 ---------- */
   Pr.add('故事绘本', 'book-1', '绘本：小风来到车车镇（6 页纸）', () => Pr.book(story, 1));
   Pr.add('写字描红', 'trace-w1', '描红：车 大 小 山 火 水 土 风', () => Pr.trace('描红 · 第 1 周的字', story.chars));
   Pr.add('数学练习', 'count-1', '数一数，写数字', () => Pr.count([[3, 'car'], [5, 'bus'], [2, 'firetruck'], [6, 'truck'], [4, 'excavator'], [7, 'car']]));

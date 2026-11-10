@@ -51,12 +51,13 @@
   };
 
   /* 一周：grade 属于哪个年级，n 这个年级里的第几周，days 每天三个活动的 id（大约十分钟），
-     extra 只在“自由玩”里出现的活动。 */
+     extra 只在“自由玩”里出现的活动，prints 这一周要用的打印材料（家长可以一次打印出来）。 */
   CE.addWeek = function (w) {
     if (CE.WEEKS.some(x => x.id === w.id)) taken('周', w.id);
     const at = x => CE.GRADES.findIndex(g => g.id === x.grade);
     if (at(w) < 0) throw new Error('第 ' + w.n + ' 周写的年级还没有登记：' + w.grade);
     w.extra = w.extra || [];
+    w.prints = w.prints || [];
     CE.WEEKS.push(w);
     CE.WEEKS.sort((a, b) => (at(a) - at(b)) || (a.n - b.n));
   };

@@ -1,4 +1,5 @@
-/* 孩子看到的界面：活动外壳、主页、每日任务、自由玩、休息提醒。 */
+/* 孩子看到的界面：活动外壳、主页、每天的一站、自由玩、休息提醒。
+   这里的话都是说给孩子听的：不说“任务”“完成”，说“出发”“这一站”“玩好啦”。 */
 (function (CE) {
   'use strict';
   const U = CE.U, A = CE.Art, S = CE.Store, P = CE.Plan;
@@ -65,6 +66,8 @@
         if (ratio >= 0.8 && lv < act.leveled) S.setLv(id, lv + 1);
         else if (ratio < 0.4 && lv > 1) S.setLv(id, lv - 1);
       }
+      // quiet：活动的后半段不在屏幕上（比如去纸上涂色），不弹星星，直接回去
+      if (res.quiet) return U.go(back);
       result(app, act, ctx, stars, back);
     });
   };
@@ -78,7 +81,7 @@
       `<div class="result-btns"><button class="btn again">再玩一次</button><button class="btn ok">好了 ✓</button></div></div>`;
     app.appendChild(el);
     CE.Sfx.star();
-    CE.Speech.say(stars === 3 ? '太棒了！三颗星星！' : stars === 2 ? '很好！两颗星星！' : '完成啦！一颗星星！');
+    CE.Speech.say(stars === 3 ? '太棒了！三颗星星！' : stars === 2 ? '很好！两颗星星！' : '玩好啦！一颗星星！');
     const ok = U.$('.ok', el);
     if (CE.TEST) {
       U.$$('[data-tn]', app).forEach(e => e.removeAttribute('data-tn'));
@@ -98,7 +101,7 @@
           const day = P.day(w.id + 'd' + (i + 1));
           const done = P.isDone(day), open = P.unlocked(day);
           const cls = done ? 'done' : cur && cur.id === day.id ? 'cur' : open ? '' : 'lock';
-          return `<button class="stop ${cls}" data-d="${day.id}" ${open ? '' : 'disabled'} aria-label="第${i + 1}天">${done ? '★' : i + 1}</button>`;
+          return `<button class="stop ${cls}" data-d="${day.id}" ${open ? '' : 'disabled'} aria-label="第${i + 1}站">${done ? '★' : i + 1}</button>`;
         }).join('') + `</div></div>`).join('');
       app.innerHTML =
         `<div class="screen home">` +
@@ -110,13 +113,13 @@
             { k: 'xiaohuo', x: 650, y: 398, s: 0.8, flip: true, anim: 'bob', delay: 0.5 },
             { k: 'xiaofeng', x: 400, y: 428, s: 1.2, anim: 'bob' }])}</div>` +
           `<div class="home-actions">` +
-            `<button class="big task"><span class="em">🚩</span><span>今天的任务</span>` +
-              `<small>${cur ? `第 ${cur.week.n} 周 · 第 ${cur.n} 天` : '全部完成啦'}</small></button>` +
+            `<button class="big trip"><span class="em">🔑</span><span>出发</span>` +
+              `<small>${cur ? `${U.esc(cur.week.title)} · 第 ${cur.n} 站` : '每一站都去过啦'}</small></button>` +
             `<button class="big free"><span class="em">🎮</span><span>自由玩</span><small>想玩什么都可以</small></button>` +
           `</div>` +
           `<div class="map">${stops}</div>` +
         `</div>`;
-      U.$('.task', app).addEventListener('click', () => { CE.Sfx.tap(); U.go(cur ? '#/day/' + cur.id : '#/free'); });
+      U.$('.trip', app).addEventListener('click', () => { CE.Sfx.tap(); U.go(cur ? '#/day/' + cur.id : '#/free'); });
       U.$('.free', app).addEventListener('click', () => { CE.Sfx.tap(); U.go('#/free'); });
       U.$('.parent-btn', app).addEventListener('click', () => U.go('#/parent'));
       U.$$('.stop', app).forEach(b => b.addEventListener('click', () => { CE.Sfx.tap(); U.go('#/day/' + b.dataset.d); }));
@@ -125,11 +128,11 @@
     greet() {
       const name = S.data.settings.name, cur = P.current();
       CE.Speech.say((name ? name + '，你好！' : '你好！') +
-        (cur ? '点红旗，开始今天的任务。' : '任务都完成啦！去自由玩吧。'));
+        (cur ? '点钥匙，跟小风出发。点游戏机，想玩什么都可以。' : '每一站都去过啦！点游戏机，想玩什么都可以。'));
     }
   };
 
-  /* ================= 每日任务 ================= */
+  /* ================= 每天的一站：三个活动 ================= */
   CE.Day = {
     show(app, id) {
       const day = P.day(id);
@@ -139,10 +142,10 @@
       app.innerHTML =
         `<div class="screen day">` +
           `<header class="topbar"><button class="ic-btn back" aria-label="回主页">◀</button>` +
-            `<div class="brand sm">第 ${day.week.n} 周 · 第 ${day.n} 天</div><span class="spacer"></span></header>` +
+            `<div class="brand sm">第 ${day.week.n} 周 · 第 ${day.n} 站</div><span class="spacer"></span></header>` +
           `<div class="day-title">${U.esc(day.week.title)}</div>` +
           `<div class="day-cards">${day.acts.map(a => card(a, rec.done[a])).join('')}</div>` +
-          (all ? `<div class="day-done">${A.who('xiaofeng', {}, 'cheer')}<span>今天的任务完成啦！</span></div>` : '') +
+          (all ? `<div class="day-done">${A.who('xiaofeng', {}, 'cheer')}<span>这一站玩好啦！</span></div>` : '') +
         `</div>`;
       U.$('.back', app).addEventListener('click', () => U.go('#/'));
       U.$$('.acard', app).forEach(b => b.addEventListener('click', () => {
@@ -151,9 +154,9 @@
       if (all && !rec.cheered) {
         rec.cheered = 1; S.save();
         CE.Sfx.star();
-        CE.Speech.say('今天的任务都完成啦！明天再来玩。');
+        CE.Speech.say('这一站玩好啦！明天再出发。');
       } else if (!all) {
-        CE.Speech.say('今天有三个任务。点一个，开始吧。');
+        CE.Speech.say('这一站有三样好玩的。想玩哪个，就点哪个。');
       }
     }
   };

@@ -12,7 +12,7 @@
     const t = S.rollDay(), lim = Number(S.data.settings.minutes) || 0;
     const cell = (k, v) => `<div class="kv"><b>${v}</b><span>${k}</span></div>`;
     return `<div class="kvs">` +
-      cell('完成的天数', `${done} / ${days.length}`) +
+      cell('走过的站', `${done} / ${days.length}`) +
       cell('星星', S.stars()) +
       cell('累计使用', U.dur(total)) +
       cell('今天已用', U.dur(t.ms) + (lim ? ` / ${lim} 分钟` : '')) +
@@ -112,7 +112,12 @@
 
   function prints() {
     const groups = CE.Print.GROUPS.filter(g => CE.Print.LIST.some(it => it.g === g));
-    return groups.map(g => `<h3>${g}</h3><div class="links">` +
+    const cur = P.current();
+    return `<h3>按周打印</h3><div class="links">` +
+      CE.WEEKS.filter(w => w.prints.length).map(w =>
+        `<button class="plink" data-go="#/print/week-${w.id}">第 ${w.n} 周　${U.esc(w.title)}${cur && cur.week === w ? '（现在）' : ''}</button>`).join('') +
+      `</div><p class="muted">一周要用的纸一次打印出来。涂色以纸为主：孩子走到涂色那一步，屏幕会让他去拿纸和蜡笔。</p>` +
+      groups.map(g => `<h3>${g}</h3><div class="links">` +
       CE.Print.LIST.filter(it => it.g === g).map(it => `<button class="plink" data-go="#/print/${it.id}">${U.esc(it.t)}</button>`).join('') +
       `</div>`).join('') +
       `<p class="muted">A4 纸，打开后点“打印”。描红页没有笔顺提示，第一次写请您示范。</p>`;
