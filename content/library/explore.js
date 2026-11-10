@@ -31,6 +31,8 @@
     def('color-' + k, { cat: 'art', title: '给' + name + '涂色', icon: '🖍️', sub: '在纸上涂，练握笔和控笔', run: api => CE.Coloring.paper(api, k) });
     Pr.add('涂色画画', 'color-' + k, '涂色：' + name, () => Pr.coloring(k));
   });
+  // 列车：他也喜欢列车。还没有编进故事，先有一张涂色纸
+  Pr.add('涂色画画', 'color-train', '涂色：列车', () => Pr.coloringKind('train', '列车', '呜——列车开来了！'));
   Pr.add('涂色画画', 'draw-car', '画一辆我自己的车', Pr.drawCar);
   Pr.add('写字描红', 'pen-roads', '控笔：沿着马路开车', Pr.roads);
 })(window.CE);

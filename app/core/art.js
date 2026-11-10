@@ -14,7 +14,8 @@
     dumptruck:  { body: '#43b66b', glass: '#d9f1ff', trim: '#ff9f43', dark: '#7a7f8c' },
     watertruck: { body: '#29b6f6', glass: '#d9f1ff', trim: '#e3f6ff', dark: '#7a7f8c' },
     bus:        { body: '#ffca3a', glass: '#d9f1ff', trim: '#ff8a3d', dark: '#7a7f8c' },
-    truck:      { body: '#9b6bdf', glass: '#d9f1ff', trim: '#f4f6fa', dark: '#7a7f8c' }
+    truck:      { body: '#9b6bdf', glass: '#d9f1ff', trim: '#f4f6fa', dark: '#7a7f8c' },
+    train:      { body: '#f4f6fa', glass: '#d9f1ff', trim: '#2bb6b0', dark: '#7a7f8c' }
   };
   A.KINDS = Object.keys(PAL);
 
@@ -145,6 +146,15 @@
         s += sh('dark', 'rect', 'x="14" y="102" width="148" height="12" rx="4"');
         s += cab();
         s += wh(48) + wh(190) + fc(205, 96);
+        break;
+
+      // 列车的车头：流线型的鼻子朝右，小轮子两两一组
+      case 'train':
+        s += sh('body', 'path', 'd="M10 108 L10 52 Q10 42 20 42 L146 42 Q190 42 216 80 Q232 102 228 110 Q225 116 216 116 L18 116 Q10 116 10 108 Z"');
+        s += sh('trim', 'path', 'd="M10 88 L204 88 L212 98 L10 98 Z"');
+        [22, 62, 102].forEach(x => { s += sh('glass', 'rect', `x="${x}" y="52" width="30" height="24" rx="5"`); });
+        s += sh('glass', 'path', 'd="M152 52 Q180 52 200 76 L158 76 Q152 76 152 70 Z"');
+        s += wh(40, 12) + wh(68, 12) + wh(150, 12) + wh(178, 12) + fc(203, 94);
         break;
     }
     return s;

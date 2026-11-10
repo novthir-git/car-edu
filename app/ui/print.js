@@ -19,10 +19,17 @@
     `<div class="sh-head"><h2>${title}</h2><div class="sh-meta">名字：__________　日期：__________</div></div>` +
     (sub ? `<p class="sh-sub">${sub}</p>` : '');
 
+  const colorSheet = (name, intro, art) =>
+    sheet(head(`给${name}涂颜色`, intro + '用你喜欢的颜色把它涂满吧！') +
+      `<div class="pr-art">${art}</div><div class="pr-hollow">${name}</div>`);
+  // 涂色页：给一个角色涂
   Pr.coloring = function (key) {
     const w = A.CHARS[key];
-    return sheet(head(`给${w.name}涂颜色`, `${w.name}是一辆${w.job}。用你喜欢的颜色把它涂满吧！`) +
-      `<div class="pr-art">${A.who(key, { line: true })}</div><div class="pr-hollow">${w.name}</div>`);
+    return colorSheet(w.name, `${w.name}是一辆${w.job}。`, A.who(key, { line: true }));
+  };
+  // 涂色页：还没有编进故事、没有名字的车也可以先涂。kind 车的种类，name 印在纸上的空心字
+  Pr.coloringKind = function (kind, name, intro) {
+    return colorSheet(name, intro, A.v(kind, { line: true }));
   };
 
   Pr.drawCar = function () {

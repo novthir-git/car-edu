@@ -62,7 +62,7 @@
       ['find-num', 'learn-zh-w1b', 'en-colors'],
       ['find-zh', 'count-cars', 'color-xiaohuo']
     ],
-    prints: ['color-xiaofeng', 'color-xiaohuo', 'pen-roads', 'book-1', 'trace-w1', 'count-1', 'cards-en-1']
+    prints: ['color-xiaofeng', 'color-xiaohuo', 'color-train', 'pen-roads', 'book-1', 'trace-w1', 'count-1', 'cards-en-1']
   });
 
   /* ---------- 这一周自己的打印材料。id 要写进上面的 prints，家长才能按周一次打印 ---------- */
