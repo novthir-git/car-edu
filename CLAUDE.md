@@ -29,7 +29,7 @@ node tests/smoke.js                  # 冒烟测试（需要 playwright），约
 node --check content/k2/w01.js       # 单个文件的语法检查
 ```
 
-`tests/smoke.js` 是唯一的测试：自己起一个静态服务器，用无头浏览器把每一天的每个活动真的玩到结束，再打开家长页和每份打印材料，期间有任何页面报错就失败。它还会检查 `app/` 和 `content/` 下的每个 `.js` 都在 `index.html` 里加载了、周安排里的活动都登记过。没有“只跑一个用例”的开关；要单独看某个活动，直接打开：
+`tests/smoke.js` 是唯一的测试：自己起一个静态服务器，用无头浏览器把每一天的每个活动真的玩到结束，再打开家长页和每份打印材料，期间有任何页面报错就失败。它还会检查 `app/` 和 `content/` 下的每个 `.js` 都在 `index.html` 里加载了、周安排里的活动都登记过、每一周的三条路（屏幕、纸、给家长的一页）都齐、每张打印的纸内容没有超出纸面。没有“只跑一个用例”的开关；要单独看某个活动，直接打开：
 
 ```
 http://localhost:8000/?test=1#/play/<活动id>?f=1
@@ -37,16 +37,24 @@ http://localhost:8000/?test=1#/play/<活动id>?f=1
 
 `?test=1` 会关闭语音和所有等待、跳过开场画面和家长验证。
 
-## 目录：程序、内容、记录三块分开
+## 目录：程序、内容、文档三块分开
 
 ```
-index.html        入口（留在根目录：双击能开，静态托管也能直接用）
-app/              程序。加内容不应该需要改这里
-content/library/  各年级共用的题库和练习，按学科分文件
-content/<年级>/   一个年级一个目录：grade.js + 每周一个 wNN.js
-docs/<年级>/      这个年级的大纲 plan.md
-docs/aims.md      培养目标，跨年级。定方向，后面附业界体系的对照
-docs/growth-log.md  成长记录，跨年级，按时间追加
+index.html            入口（留在根目录：双击能开，静态托管也能直接用）
+README.md             给人看的总览：怎么打开、去哪里看什么
+app/                  程序。加内容不应该需要改这里
+  core/               底层：util 工具，store 学习记录，speech 语音，art 画图，course 登记处
+  engines/            玩法，一个文件一种，文件名对应 CE 上的名字：
+                      quiz、cards、story、give-n（CE.GiveN）、traffic、coloring、wheel
+  ui/                 页面：screens 孩子的页面，parent 家长页，print 打印
+  css/
+content/library/      各年级共用的字库、词库和反复出现的练习，按能力的五个方面分目录（见下）
+content/<年级>/       一个年级一个目录：grade.js + 每周一个 wNN.js
+docs/aims.md          为了什么：培养目标，跨年级
+docs/systems.md       依据什么：业界体系的对照，备查
+docs/growth-log.md    他现在怎么样：成长记录，跨年级，按时间追加
+docs/<年级>/plan.md   这一年教什么：这个年级的大纲
+tests/smoke.js        冒烟测试
 ```
 
 年级代号：`k1` 小班、`k2` 中班、`k3` 大班、`g1` 一年级，往后类推。现在只有 `k2`。
@@ -59,22 +67,46 @@ docs/growth-log.md  成长记录，跨年级，按时间追加
 
 `app/core` → `app/engines` → `app/ui` → `content/library` → `content/<年级>/grade.js` → 各周 `wNN.js` → `app/main.js`（启动，必须最后）
 
+library 里，字库和词库（`zh-chars.js`、`en-words.js`）要排在用它们的练习前面；五个目录之间没有先后要求。
+
 ### 内容靠“登记”接进程序
 
 `app/core/course.js` 是登记处，里面没有具体内容。`content/` 下的文件加载时调用：
 
 - `CE.def(id, {...})` 登记一个活动
 - `CE.addStory(id, {...})` 登记一个故事（写法见 `app/engines/story.js` 开头）
-- `CE.addWeek({...})` 登记一周的安排（`days` 五天的活动、`extra` 只在自由玩出现的活动、`prints` 这一周要用的打印材料），`CE.addGrade({...})` 登记一个年级的阶段目标
+- `CE.addWeek({...})` 登记一周，三条路都在里面：屏幕（`days` 五天的活动、`extra` 只在自由玩出现的活动）、纸（`prints` 这一周要用的打印材料）、家长（`family` 给家长的一页），外加 `idea`（这一周的故事想说的一句话）
+- `CE.addGrade({...})` 登记一个年级的阶段目标
 - `CE.Print.add(分组, id, 名称, fn)` 登记一份打印材料
 
 页面（主页、自由玩、家长页的打印和大纲）只从登记处读，所以**加一周内容 = 加一个文件 + `index.html` 加一行**。id 重复、年级没登记都会直接抛错。
 
-### 什么放周文件，什么放 library
+### 一周一个文件，都按同一个顺序写
 
-- **周文件**（`content/k2/w01.js`）：这一周的故事和回忆题、这一周新教的字和词（固定清单）、五天的安排、这一周的打印材料。
-- **library**：字库 `zh-chars.js`、英语词库 `en-words.js`，以及从库里抽题或现场出题的练习（找字、数学各项、短语、找规律、红绿灯、涂色等）。它还通过 `CE.Lib` 给周文件提供编课的函数：`CE.Lib.learnZh(api, 字)`、`CE.Lib.enLesson(api, 词)`。
-- **`app/engines`**：玩法本身。`quiz.js` 的选择题引擎被识字、数学、英语、找规律共用，新练习优先用它而不是写新引擎。
+周文件（`content/k2/w01.js`）里依次是：
+
+1. **这一周**：一个 `CE.addWeek({...})`，把三条路登记齐。`family` 里是聊一聊（`talk`，三个问题：回忆的、“为什么”的、联系他自己的）、玩一玩（`play`，一两样屏幕外的小游戏）、看一看（`watch`，这一周留意的三件事）。
+2. **故事和回忆题**。
+3. **屏幕上这一周自己的活动**：新教的字和词（固定清单）。
+4. **这一周自己的纸**：绘本、描红、数学练习、英语卡片。
+
+给家长的那一页不用登记成打印材料：写了 `family`，它就出现在家长页的打印里（id 是 `family-<周 id>`），并自动排在这一周的纸最前面。
+
+### library 按能力的五个方面分目录
+
+目录对应 `docs/aims.md` 第二层的五个方面。新练习放进它主要服务的那个方面；哪个目录薄，就是哪个方面缺内容。
+
+| 目录 | 方面 | 活动类别（`cat`） | 现在有 |
+| --- | --- | --- | --- |
+| `language/` | 说得出 | `zh`、`en`（故事 `story` 在各周文件里） | 字库、找字、认字；词库、单词课、短语 |
+| `thinking/` | 想得清 | `math`、`logic`、`sci` | 数学六项；找规律；轮子实验室 |
+| `hands/` | 手上稳 | `art` | 涂色；控笔和写数字的纸 |
+| `social/` | 处得来 | `safety` | 红绿灯 |
+| `creative/` | 有点子 | 还没有屏幕上的活动 | 一张纸：画一辆我自己的车 |
+
+- 学习品质（愿意学、坐得住）不是一类内容，所以没有目录。它靠整个项目的做法，和每周“给家长”那页里的游戏。
+- library 通过 `CE.Lib` 给周文件提供编课的函数：`CE.Lib.learnZh(api, 字)`、`CE.Lib.enLesson(api, 词)`。
+- 玩法本身在 `app/engines`。`quiz.js` 的选择题引擎被识字、数学、英语、找规律共用，新练习优先用它而不是写新引擎。
 
 ### id 发布后不能改
 
@@ -122,7 +154,7 @@ docs/growth-log.md  成长记录，跨年级，按时间追加
 
 ### 打印
 
-版式在 `app/ui/print.js` + `app/css/print.css`，尺寸用毫米，按 A4 纵向设计，每个 `.sheet` 正好一页（高 296mm，内容溢出会多出空白页）。辅助线用边框而不是背景画，因为打印默认不带背景图形。印哪些材料由内容文件登记，版式函数（`Pr.book`、`Pr.trace`、`Pr.count`、`Pr.compare`、`Pr.cards`、`Pr.coloring`、`Pr.roads`）各自注明了一页最多放多少。涂色的活动和它的打印页用同一个 id（`color-xiaofeng`）。
+版式在 `app/ui/print.js` + `app/css/print.css`，尺寸用毫米，按 A4 纵向设计，每个 `.sheet` 正好一页（高 296mm，超出的内容会被裁掉，冒烟测试会查）。辅助线用边框而不是背景画，因为打印默认不带背景图形。印哪些材料由内容文件登记，版式函数（`Pr.family`、`Pr.book`、`Pr.trace`、`Pr.count`、`Pr.compare`、`Pr.cards`、`Pr.coloring`、`Pr.roads`）各自注明了一页最多放多少。`Pr.items()` 是全部能打印的东西：登记的材料，加上每周自动带的“给家长”一页。涂色的活动和它的打印页用同一个 id（`color-xiaofeng`）。
 
 ## 已知的、等内容多了要改的地方
 

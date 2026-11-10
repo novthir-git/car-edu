@@ -1,4 +1,4 @@
-/* 识字练习：找字、认字。字从 zh-chars.js 的字库里取。
+/* 说得出 · 识字练习：找字、认字。字从 zh-chars.js 的字库里取。
    CE.Lib.learnZh 留给各周的“认字”活动用（见 content/k2/w01.js）。 */
 (function (CE) {
   'use strict';

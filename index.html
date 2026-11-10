@@ -16,27 +16,44 @@
 <div id="app"></div>
 <noscript>这个页面需要开启 JavaScript 才能使用。</noscript>
 
-<!-- 程序：很少改动 -->
+<!-- 程序 · 底层：工具、学习记录、语音、画图、登记处 -->
 <script src="app/core/util.js"></script>
 <script src="app/core/store.js"></script>
 <script src="app/core/speech.js"></script>
 <script src="app/core/art.js"></script>
 <script src="app/core/course.js"></script>
+
+<!-- 程序 · 玩法：一个文件一种 -->
 <script src="app/engines/quiz.js"></script>
+<script src="app/engines/cards.js"></script>
 <script src="app/engines/story.js"></script>
-<script src="app/engines/given.js"></script>
-<script src="app/engines/explore.js"></script>
+<script src="app/engines/give-n.js"></script>
+<script src="app/engines/traffic.js"></script>
+<script src="app/engines/coloring.js"></script>
+<script src="app/engines/wheel.js"></script>
+
+<!-- 程序 · 页面：孩子的页面、家长页、打印 -->
 <script src="app/ui/screens.js"></script>
 <script src="app/ui/parent.js"></script>
 <script src="app/ui/print.js"></script>
 
-<!-- 内容 · 题库和反复出现的练习 -->
-<script src="content/library/zh-chars.js"></script>
-<script src="content/library/zh.js"></script>
-<script src="content/library/math.js"></script>
-<script src="content/library/en-words.js"></script>
-<script src="content/library/en.js"></script>
-<script src="content/library/explore.js"></script>
+<!-- 内容 · 各年级共用的库，按能力的五个方面分目录 -->
+<!-- 说得出 -->
+<script src="content/library/language/zh-chars.js"></script>
+<script src="content/library/language/zh.js"></script>
+<script src="content/library/language/en-words.js"></script>
+<script src="content/library/language/en.js"></script>
+<!-- 想得清 -->
+<script src="content/library/thinking/math.js"></script>
+<script src="content/library/thinking/logic.js"></script>
+<script src="content/library/thinking/science.js"></script>
+<!-- 手上稳 -->
+<script src="content/library/hands/coloring.js"></script>
+<script src="content/library/hands/pen.js"></script>
+<!-- 处得来 -->
+<script src="content/library/social/safety.js"></script>
+<!-- 有点子 -->
+<script src="content/library/creative/drawing.js"></script>
 
 <!-- 内容 · 幼儿园中班（k2）。每做好一周，在这里加一行 -->
 <script src="content/k2/grade.js"></script>

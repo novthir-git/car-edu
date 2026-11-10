@@ -1,4 +1,4 @@
-/* 英语练习。词从 en-words.js 的词库里取。
+/* 说得出 · 英语练习。词从 en-words.js 的词库里取。
    CE.Lib.enLesson 留给各周的单词课用（见 content/k2/w01.js）。 */
 (function (CE) {
   'use strict';

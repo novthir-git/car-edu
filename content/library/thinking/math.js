@@ -1,4 +1,5 @@
-/* 数学练习。题目都是现场出的，难度分级，由外壳按表现自动升降。 */
+/* 想得清 · 数：点数、认数、按数取物、比多少、找缺的数、看图加法。
+   题目都是现场出的，难度分级，由外壳按表现自动升降。 */
 (function (CE) {
   'use strict';
   const U = CE.U, A = CE.Art, Q = CE.Quiz, S = CE.Store, def = CE.def;
@@ -129,6 +130,4 @@
       });
     }
   });
-
-  CE.Print.add('写字描红', 'trace-num', '写数字 1–10（2 页纸）', CE.Print.traceNum);
 })(window.CE);

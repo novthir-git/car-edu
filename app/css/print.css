@@ -15,13 +15,14 @@
 .fam-lead { margin: 0 0 4mm; }
 .fam-idea { border: .5mm solid #222; border-radius: 3mm; padding: 3mm 4mm; margin: 0 0 6mm; }
 .fam-idea b { font-family: var(--kai); font-size: 5.6mm; font-weight: 400; }
-.fam-sec { margin-bottom: 6mm; }
+.fam-sec { margin-bottom: 5mm; }
+.fam-sec:last-child { margin-bottom: 0; }
 /* 小标题左边加一道粗线、问题下面的提示用灰色：有的设备没有粗体的中文字体，不能只靠加粗来区分 */
 .fam-sec h3 { margin: 0 0 1mm; font-size: 6mm; line-height: 1.3; border-left: 1.6mm solid #222; padding-left: 3mm; }
 .fam-note { margin: 0; color: #444; font-size: 4mm; }
 .fam-list { margin: 2mm 0 0; padding: 0; list-style: none; counter-reset: fam; }
-.fam-list li { position: relative; padding: 2.4mm 0 2.4mm 10mm; border-top: .3mm dashed #999; counter-increment: fam; }
-.fam-list li::before { content: counter(fam); position: absolute; left: 0; top: 2.9mm; width: 6.4mm; height: 6.4mm; border: .4mm solid #222; border-radius: 50%; text-align: center; line-height: 5.6mm; font-size: 3.8mm; font-weight: 700; }
+.fam-list li { position: relative; padding: 2mm 0 2mm 10mm; border-top: .3mm dashed #999; counter-increment: fam; }
+.fam-list li::before { content: counter(fam); position: absolute; left: 0; top: 2.5mm; width: 6.4mm; height: 6.4mm; border: .4mm solid #222; border-radius: 50%; text-align: center; line-height: 5.6mm; font-size: 3.8mm; font-weight: 700; }
 .fam-list b, .fam-list span { display: block; }
 .fam-list b + span { color: #444; }
 .fam-list i { font-style: normal; font-weight: 400; font-size: 4mm; color: #444; margin-left: 3mm; }
