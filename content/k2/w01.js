@@ -1,11 +1,48 @@
 /* 中班 · 第 1 周　你好，车车镇
-   一个文件就是一周：故事、这一周新教的字和词、五天的安排、配套的打印材料。
-   题库和反复出现的练习不在这里，在 content/library/ 里。 */
+   一个文件就是一周，都按同一个顺序写：这一周（三条路的总表）→ 故事 → 屏幕上这一周自己的活动 → 这一周自己的纸。 */
 (function (CE) {
   'use strict';
   const def = CE.def, L = CE.Lib, Pr = CE.Print;
 
-  /* ---------- 故事（写法见 app/engines/story.js 开头） ---------- */
+  /* ---------- 这一周：屏幕、纸、家长三条路都登记在这里 ---------- */
+  CE.addWeek({
+    id: 'w1', grade: 'k2', n: 1, title: '你好，车车镇',
+    idea: '每辆车都有自己的本领，小也有小的好。',
+    // 屏幕：五天，每天三个活动，大约十分钟
+    days: [
+      ['story-1', 'find-zh', 'color-xiaofeng'],
+      ['count-cars', 'en-vehicles', 'learn-zh-w1a'],
+      ['story-1-quiz', 'give-n', 'traffic'],
+      ['find-num', 'learn-zh-w1b', 'en-colors'],
+      ['find-zh', 'count-cars', 'color-xiaohuo']
+    ],
+    // 纸：这一周要打印的。给家长的那一页会自动排在最前面，不用写在这里
+    prints: ['color-xiaofeng', 'color-xiaohuo', 'color-train', 'pen-roads', 'book-1', 'trace-w1', 'count-1', 'cards-en-1'],
+    // 家长：给家长的一页（写法见 app/ui/print.js 的 Pr.family）
+    family: {
+      talk: [
+        { q: '车车镇有哪些车？它们各会做什么？',
+          a: '想不起来就翻绘本，指着图说。能说出“谁会做什么”就很好。' },
+        { q: '小风为什么说“我好小”？大山是怎么回答他的？',
+          a: '“为什么”的问题要慢一点，等他想。他说出原因以后，你用“因为……所以……”把它再说一遍。' },
+        { q: '你有什么本领？有什么事是小孩做得到、大人反而做不到的？',
+          a: '比如钻到桌子底下捡东西。让他多说几样，你也说说自己的。' }
+      ],
+      play: [
+        { t: '反着做', aim: '练专心听、管住自己',
+          how: '先玩正的：你说“大”，他踮脚举手变大；你说“小”，他蹲下变小。玩熟了反过来，说“大”要蹲下，说“小”要举手。再换他发口令，你来做。' },
+        { t: '路上认灯、数车', aim: '把屏幕上学的用到真的地方',
+          how: '过马路时请他告诉你：现在是什么灯，能不能走？等车的时候一起数路过的公共汽车，或者只数红色的车，数到 10。' }
+      ],
+      watch: [
+        '涂色、沿着马路描线的时候：他能自己坐多久？笔是一把抓，还是三个手指捏？',
+        '答错的时候：他是再试一次，乱点，还是不想玩了？',
+        '请他讲故事的时候：是只说出名字，还是能说出谁做了什么？'
+      ]
+    }
+  });
+
+  /* ---------- 故事和回忆题（写法见 app/engines/story.js 开头） ---------- */
   const story = CE.addStory('story-1', {
     title: '小风来到车车镇',
     chars: ['车', '大', '小', '山', '火', '水', '土', '风'],
@@ -46,26 +83,13 @@
   def('story-1', { cat: 'story', title: '小风来到车车镇', icon: '📖', sub: '第 1 周故事', run: api => CE.Story.run(api, story) });
   def('story-1-quiz', { cat: 'story', title: '故事问答：谁是谁', icon: '❓', sub: '回忆故事里的角色', run: api => CE.Story.quiz(api, story) });
 
-  /* ---------- 这一周新教的字和词 ---------- */
+  /* ---------- 屏幕：这一周新教的字和词。反复出现的练习在 content/library/ 里 ---------- */
   def('learn-zh-w1a', { cat: 'zh', title: '认字：车 山 火 风', icon: '字', sub: '第 1 周故事里的字（上）', run: api => L.learnZh(api, ['车', '山', '火', '风']) });
   def('learn-zh-w1b', { cat: 'zh', title: '认字：大 小 水 土', icon: '字', sub: '第 1 周故事里的字（下）', run: api => L.learnZh(api, ['大', '小', '水', '土']) });
   def('en-vehicles', { cat: 'en', title: 'car, bus, truck', icon: 'ABC', sub: '三种车的英语', run: api => L.enLesson(api, ['car', 'bus', 'truck']) });
   def('en-colors', { cat: 'en', title: 'red, blue, yellow', icon: 'ABC', sub: '三种颜色的英语', run: api => L.enLesson(api, ['red', 'blue', 'yellow']) });
 
-  /* ---------- 五天的安排：每天三个活动，大约十分钟 ---------- */
-  CE.addWeek({
-    id: 'w1', grade: 'k2', n: 1, title: '你好，车车镇',
-    days: [
-      ['story-1', 'find-zh', 'color-xiaofeng'],
-      ['count-cars', 'en-vehicles', 'learn-zh-w1a'],
-      ['story-1-quiz', 'give-n', 'traffic'],
-      ['find-num', 'learn-zh-w1b', 'en-colors'],
-      ['find-zh', 'count-cars', 'color-xiaohuo']
-    ],
-    prints: ['color-xiaofeng', 'color-xiaohuo', 'color-train', 'pen-roads', 'book-1', 'trace-w1', 'count-1', 'cards-en-1']
-  });
-
-  /* ---------- 这一周自己的打印材料。id 要写进上面的 prints，家长才能按周一次打印 ---------- */
+  /* ---------- 纸：这一周自己的打印材料。id 要写进上面的 prints，家长才能按周一次打印 ---------- */
   Pr.add('故事绘本', 'book-1', '绘本：小风来到车车镇（6 页纸）', () => Pr.book(story, 1));
   Pr.add('写字描红', 'trace-w1', '描红：车 大 小 山 火 水 土 风', () => Pr.trace('描红 · 第 1 周的字', story.chars));
   Pr.add('数学练习', 'count-1', '数一数，写数字', () => Pr.count([[3, 'car'], [5, 'bus'], [2, 'firetruck'], [6, 'truck'], [4, 'excavator'], [7, 'car']]));

@@ -78,6 +78,13 @@ async function play(page, base, act, query, first) {
   const noPrint = await page.evaluate(() =>
     [].concat(...CE.WEEKS.map(w => w.prints)).filter(id => !CE.Print.LIST.some(p => p.id === id)));
   if (noPrint.length) throw new Error('周文件的 prints 里有没登记的打印材料：' + noPrint.join(', '));
+  // 每一周都要有三条路：屏幕（五天）、纸、给家长的一页
+  const thin = await page.evaluate(() => CE.WEEKS.filter(w => {
+    const f = w.family || {};
+    return w.days.length !== 5 || !w.prints.length || !w.idea ||
+      !(f.talk || []).length || !(f.play || []).length || !(f.watch || []).length;
+  }).map(w => w.id));
+  if (thin.length) throw new Error('这几周缺了屏幕、纸或给家长的一页：' + thin.join(', '));
 
   let played = 0;
   for (const d of days) {
@@ -112,10 +119,17 @@ async function play(page, base, act, query, first) {
   await page.waitForSelector('.doc .zgrid');
   await page.click('.zc');   // 手动标记一个字
   // 每一份打印材料，再加上每一周合在一起的那一份
-  const prints = await page.evaluate(() => CE.Print.LIST.map(p => p.id).concat(CE.WEEKS.map(w => 'week-' + w.id)));
+  const prints = await page.evaluate(() => CE.Print.items().map(p => p.id).concat(CE.WEEKS.map(w => 'week-' + w.id)));
   for (const id of prints) {
     await page.goto(`${base}/?test=1#/print/${id}`);
     await page.waitForSelector('.sheet');
+    // 每张纸高度固定（296mm），内容超出会被裁掉，印出来才发现就晚了。离下边不到 4mm 的地方多数打印机也印不到
+    const over = await page.evaluate(() => [...document.querySelectorAll('.sheet')].filter(s => {
+      const r = s.getBoundingClientRect(), edge = r.bottom - 4 * r.height / 296;
+      // 只看网页元素：场景图里的背景色块本来就画到画布外面，会被裁掉，不算超出
+      return [...s.querySelectorAll('*')].some(e => e instanceof HTMLElement && e.getBoundingClientRect().bottom > edge + 1);
+    }).length);
+    if (over) fail(`打印材料 ${id} 有 ${over} 页的内容超出了纸面`);
   }
 
   await browser.close();

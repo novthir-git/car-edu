@@ -50,8 +50,11 @@
     CE.GRADES.sort((a, b) => a.order - b.order);
   };
 
-  /* 一周：grade 属于哪个年级，n 这个年级里的第几周，days 每天三个活动的 id（大约十分钟），
-     extra 只在“自由玩”里出现的活动，prints 这一周要用的打印材料（家长可以一次打印出来）。 */
+  /* 一周：grade 属于哪个年级，n 这个年级里的第几周，title 标题，idea 这一周的故事想说的一句话。
+     一周有三条路，都登记在这里：
+       屏幕  days 每天三个活动的 id（大约十分钟）；extra 只在“自由玩”里出现的活动
+       纸    prints 这一周要用的打印材料（家长可以一次打印出来）
+       家长  family 给家长的一页：talk 聊一聊，play 玩一玩，watch 看一看（写法见 CE.Print.family） */
   CE.addWeek = function (w) {
     if (CE.WEEKS.some(x => x.id === w.id)) taken('周', w.id);
     const at = x => CE.GRADES.findIndex(g => g.id === x.grade);

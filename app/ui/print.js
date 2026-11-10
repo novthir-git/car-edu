@@ -1,10 +1,10 @@
-/* 打印材料的版式：涂色页、绘本、描红、数学练习、英语卡片。按 A4 设计。
+/* 打印材料的版式：给家长的一页、涂色页、绘本、描红、数学练习、英语卡片。按 A4 设计。
    这里只管“长什么样”。具体印哪些，由 content/ 下的文件用 Pr.add(...) 登记。 */
 (function (CE) {
   'use strict';
   const U = CE.U, A = CE.Art;
   // GROUPS 是家长页上分组的顺序
-  const Pr = CE.Print = { LIST: [], GROUPS: ['涂色画画', '故事绘本', '写字描红', '数学练习', '英语卡片'] };
+  const Pr = CE.Print = { LIST: [], GROUPS: ['给家长', '涂色画画', '故事绘本', '写字描红', '数学练习', '英语卡片'] };
 
   /* 登记一份打印材料：g 分组，id 全局唯一，t 家长页上显示的名称，f 返回若干页的函数 */
   Pr.add = function (g, id, t, f) {
@@ -110,11 +110,43 @@
       `</div>`);
   };
 
-  // 一周要用的纸合成一份，一次打印出来。周文件里的 prints 列出这一周用哪些
+  /* 给家长：每周一页，放在这一周的纸最前面。屏幕上练不到的（说、专注、相处）靠这一页交给家长。
+     内容写在周文件的 CE.addWeek 里，这里不用另外登记：
+       idea          这一周的故事想说的一句话
+       family.talk   聊一聊 [{q 问题, a 怎么接}]，三个：回忆的、“为什么”的、联系他自己的
+       family.play   玩一玩 [{t 名字, aim 练什么, how 怎么玩}]，一两样，不用屏幕
+       family.watch  看一看 [一句话]，三件这一周留意的事
+     一页放得下的大约就是这些。写多了会被裁掉，冒烟测试会查。 */
+  Pr.family = function (w) {
+    const o = w.family;
+    const sec = (title, note, items) =>
+      `<div class="fam-sec"><h3>${title}</h3><p class="fam-note">${note}</p>` +
+      `<ol class="fam-list">${items.map(h => `<li>${h}</li>`).join('')}</ol></div>`;
+    return sheet(
+      `<div class="sh-head"><h2>给家长：第 ${w.n} 周</h2><div class="sh-meta">${w.title}</div></div>` +
+      `<div class="fam">` +
+        `<p class="fam-lead">屏幕上练不到的事都在这一页：听他说，陪他玩，看看他。加起来一周二三十分钟，挑着做，不用做全。</p>` +
+        `<p class="fam-idea">这一周的故事想说的是：<b>${w.idea}</b></p>` +
+        sec('聊一聊', '看完故事以后，或者睡前拿着打印的绘本。没有标准答案：等他说完再接话；他说得短，就把他的话补完整，再说一遍。',
+          o.talk.map(t => `<b>${t.q}</b><span>${t.a}</span>`)) +
+        sec('玩一玩', '不用屏幕，一次五分钟。他不想玩就停。',
+          o.play.map(p => `<b>${p.t}<i>${p.aim}</i></b><span>${p.how}</span>`)) +
+        sec('看一看', '不用考他，平时留意就行。想到了就记一句，记在家长页的“观察笔记”里或者这张纸上都行。',
+          o.watch.map(t => `<span>${t}</span>`)) +
+      `</div>`);
+  };
+
+  // 全部能打印的：每一周“给家长”的那页（id 是 family-<周 id>），加上登记过的材料
+  Pr.items = function () {
+    return CE.WEEKS.filter(w => w.family).map(w => (
+      { g: '给家长', id: 'family-' + w.id, t: `第 ${w.n} 周　${w.title}`, f: () => Pr.family(w) })).concat(Pr.LIST);
+  };
+
+  // 一周要用的纸合成一份，一次打印出来：最前面是给家长的一页，后面是周文件 prints 里列的材料
   Pr.week = function (w) {
     return {
       id: 'week-' + w.id, t: `第 ${w.n} 周要用的纸：${w.title}`,
-      f: () => (w.prints || []).map(id => {
+      f: () => (w.family ? Pr.family(w) : '') + (w.prints || []).map(id => {
         const it = Pr.LIST.find(x => x.id === id);
         if (!it) throw new Error(`第 ${w.n} 周要打印的材料没有登记：` + id);
         return it.f();
@@ -124,7 +156,7 @@
 
   Pr.show = function (app, id) {
     const wk = CE.WEEKS.find(w => 'week-' + w.id === id);
-    const it = wk ? Pr.week(wk) : Pr.LIST.find(x => x.id === id);
+    const it = wk ? Pr.week(wk) : Pr.items().find(x => x.id === id);
     if (!it) return U.go('#/parent');
     app.innerHTML =
       `<div class="print-view">` +
