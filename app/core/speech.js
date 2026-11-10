@@ -70,9 +70,13 @@
     if (S.supported) { try { speechSynthesis.cancel(); } catch (e) { /* 忽略 */ } }
   };
 
+  // 单独的“2”后面跟量词时要读“两”：2辆 → 两辆（12辆、20辆不变）。语音引擎会读成“二辆”
+  S.spoken = t => String(t).replace(/(^|[^\d])2(?=[辆块个颗只本张])/g, '$1两');
+
   // parts: 字符串，或 [{t:'文字', lang:'en'}, ...]。返回 Promise，读完（或被打断）后结束。
   S.say = function (parts) {
-    parts = [].concat(parts || []).map(p => (typeof p === 'string' ? { t: p } : p)).filter(p => p && p.t);
+    parts = [].concat(parts || []).map(p => (typeof p === 'string' ? { t: p } : p)).filter(p => p && p.t)
+      .map(p => (p.lang === 'en' ? p : Object.assign({}, p, { t: S.spoken(p.t) })));
     S.stop();
     const my = token;
     if (CE.TEST || !S.supported || !parts.length) return Promise.resolve(false);
