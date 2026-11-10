@@ -1,0 +1,73 @@
+/* 打印材料的版式。尺寸用毫米，按 A4 纵向设计。屏幕上是预览，打印时每个 .sheet 一页。 */
+.print-view { background: #e3e8ef; min-height: 100vh; padding-bottom: 24px; }
+.print-bar { position: sticky; top: 0; z-index: 5; display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 10px 16px; background: #fff; border-bottom: 1px solid #ccd3de; font-weight: 700; }
+.sheets { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 16px; overflow-x: auto; }
+.sheet { background: #fff; color: #111; width: 210mm; height: 296mm; padding: 10mm; flex: none; position: relative; overflow: hidden; box-shadow: 0 2px 10px rgba(0, 0, 0, .18); font-family: var(--sans); }
+
+.sh-head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: .6mm solid #222; padding-bottom: 2mm; margin-bottom: 4mm; }
+.sh-head h2 { margin: 0; font-size: 9mm; font-family: var(--kai); font-weight: 400; }
+.sh-meta { font-size: 4.2mm; }
+.sh-sub { font-size: 4.8mm; margin: 0 0 5mm; }
+.sh-sub.mt { margin-top: 8mm; }
+
+/* 涂色 */
+.pr-art .veh { width: 100%; height: auto; display: block; }
+.pr-art .veh [stroke-width="3"] { stroke-width: 2; }
+.pr-hollow { font-family: var(--kai); font-size: 56mm; line-height: 1.25; text-align: center; letter-spacing: 8mm; color: #fff; -webkit-text-stroke: .5mm #222; }
+.pr-draw { width: 100%; height: auto; display: block; }
+
+/* 描红：田字格 */
+.trace-row { display: flex; align-items: center; margin-bottom: 4mm; }
+.trace-lab { width: 26mm; display: flex; flex-direction: column; font-size: 4mm; line-height: 1.35; color: #333; flex: none; }
+.trace-lab b { font-size: 5.4mm; font-weight: 600; color: #111; }
+.tz { width: 22mm; height: 22mm; border: .4mm solid #444; margin-right: -.4mm; position: relative; flex: none; font-family: var(--kai); font-size: 17mm; line-height: 21mm; text-align: center; color: #111; }
+.tz::before, .tz::after { content: ""; position: absolute; }
+.tz::before { left: 50%; top: 0; bottom: 0; border-left: .2mm dashed #999; }
+.tz::after { top: 50%; left: 0; right: 0; border-top: .2mm dashed #999; }
+.tz.ghost { color: #cfcfcf; }
+
+/* 数学 */
+.cnt-row, .cmp-row { display: flex; align-items: center; gap: 4mm; border-bottom: .3mm dashed #999; padding: 6mm 0; }
+.cnt-items { flex: 1; display: flex; flex-wrap: wrap; gap: 2mm; align-items: center; }
+.cnt-items .veh { width: 21mm; height: auto; display: block; }
+.cnt-items .veh [stroke-width] { stroke-width: 4.5; }
+.cmp-row .cnt-items { border: .3mm solid #bbb; border-radius: 4mm; padding: 3mm; min-height: 30mm; }
+.cmp-row .cnt-items .veh { width: 12.5mm; }
+.cmp-row .cnt-items .veh [stroke-width] { stroke-width: 6; }
+.cnt-box { width: 22mm; height: 22mm; border: .6mm solid #222; border-radius: 3mm; flex: none; }
+.seq-row { display: flex; gap: 2mm; }
+.seq-row .cnt-box { width: 17mm; height: 17mm; font-size: 9mm; font-weight: 700; line-height: 16mm; text-align: center; }
+
+/* 绘本 */
+.bk-cover { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10mm; text-align: center; }
+.bk-cover h1 { font-family: var(--kai); font-weight: 400; font-size: 22mm; margin: 0; }
+.bk-series { font-size: 6mm; letter-spacing: 1mm; }
+.bk-cover .bk-art { width: 100%; }
+.bk-page { height: 133mm; display: flex; flex-direction: column; gap: 3mm; position: relative; }
+.bk-art { border: .6mm solid #222; border-radius: 4mm; overflow: hidden; aspect-ratio: 16 / 9; flex: none; }
+.bk-art .scene { width: 100%; height: 100%; display: block; }
+.bk-text { font-family: var(--kai); font-size: 7.6mm; line-height: 1.35; margin: 0; text-align: center; }
+.bk-text .tc { color: #c0392b; background: none; padding: 0; }
+.bk-no { position: absolute; right: 0; bottom: 2mm; font-size: 4mm; color: #555; }
+.bk-end { position: absolute; left: 10mm; right: 10mm; bottom: 6mm; margin: 0; text-align: center; font-family: var(--kai); font-size: 6mm; }
+
+/* 英语卡片 */
+.fc-grid { display: grid; grid-template-columns: 1fr 1fr; }
+.fc { height: 87mm; border: .3mm dashed #888; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3mm; }
+.fc-pic .veh { width: 70mm; height: auto; display: block; }
+.fc-pic .blob { width: 46mm; border-width: .8mm; }
+.fc-pic .num { font-size: 40mm; }
+.fc-w { font-size: 14mm; font-weight: 800; line-height: 1; }
+.fc-zh { font-size: 5mm; color: #555; }
+
+@page { size: A4; margin: 0; }
+@media print {
+  html, body { height: auto; background: #fff !important; }
+  .no-print { display: none !important; }
+  #app, .print-view { display: block; min-height: 0; background: #fff; padding: 0; }
+  .sheets { display: block; padding: 0; overflow: visible; }
+  .sheet { box-shadow: none; margin: 0; break-after: page; page-break-after: always; }
+  .sheet:last-child { break-after: auto; page-break-after: auto; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .an, .an-spin, .wheel { animation: none !important; }
+}
