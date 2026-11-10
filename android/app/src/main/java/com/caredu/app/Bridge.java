@@ -22,7 +22,7 @@ final class Bridge {
     public String info() {
         JSONObject o = new JSONObject();
         try {
-            o.put("shell", BuildConfig.VERSION_CODE);
+            o.put("shell", BuildConfig.SHELL);
             o.put("app", BuildConfig.VERSION_NAME);
             WebFiles.Version cur = a.files.cur, best = a.files.best();
             o.put("content", cur.json());

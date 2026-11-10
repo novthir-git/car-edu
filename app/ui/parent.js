@@ -157,9 +157,9 @@
     return `<p>应用（外壳）第 ${U.esc(i.shell)} 版。内容：${ver(c)}，${c.from === 'update' ? '下载的更新' : '应用自带'}。</p>` +
       (st ? `<p class="warn">新内容 ${ver(st)} 已经下载好，下次打开应用时换上。<button class="btn sm" data-act="apply">现在换上</button></p>` : '') +
       `<p class="muted">${i.checking ? '正在检查更新……' : `上次检查：${i.last ? time(i.last) : '还没有'}。${U.esc(i.msg || '')}`}</p>` +
-      `<div class="form"><label>更新地址（一行一个，按顺序试，例如家里 NAS 的局域网地址和 DDNS 地址）` +
-        `<textarea data-k="sources" rows="3" placeholder="http://192.168.1.10:38080/">${U.esc((i.sources || []).join('\n'))}</textarea></label></div>` +
-      ((i.builtin || []).length ? `<p class="muted">上面的都连不上时，还会试：${i.builtin.map(U.esc).join('、')}</p>` : '') +
+      `<div class="form"><label>自己的更新地址（可以不填。想从别的地方下载更新时，例如家里的 NAS，一行写一个，按顺序试）` +
+        `<textarea data-k="sources" rows="2" placeholder="不填就从下面的默认地址下载">${U.esc((i.sources || []).join('\n'))}</textarea></label></div>` +
+      ((i.builtin || []).length ? `<p class="muted">默认地址：${i.builtin.map(U.esc).join('、')}</p>` : '') +
       `<div class="row"><button class="btn sm" data-act="check" ${i.checking ? 'disabled' : ''}>检查更新</button></div>` +
       `<p class="muted">应用每次打开时会在后台查一下有没有新内容，只下载，不上传任何记录。更新包带签名，签名对不上的不会换上，所以地址用 http 也可以。` +
       `新内容不会在孩子玩到一半时换上，要等下次打开应用，或者离开半小时以上再回来。外壳本身要更新时，这里会提示去下载新的应用（APK）安装。</p>`;

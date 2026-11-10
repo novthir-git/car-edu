@@ -98,7 +98,7 @@ final class WebFiles {
             if (!man.isFile() || !new File(d, "index.html").isFile()) continue;
             try (InputStream in = new FileInputStream(man)) {
                 Version v = new Version(new JSONObject(new String(Pack.read(in, 65536), StandardCharsets.UTF_8)), d);
-                if (v.v > best.v && v.shell <= BuildConfig.VERSION_CODE) best = v;
+                if (v.v > best.v && v.shell <= BuildConfig.SHELL) best = v;
             } catch (IOException | JSONException ignored) {
                 // 坏掉的记录就当没有
             }

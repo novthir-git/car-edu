@@ -1,4 +1,5 @@
-/* 冒烟测试：用无头浏览器把已做好的每一周、每个活动都真的玩一遍，再打开家长页和每一份打印材料。
+/* 冒烟测试：用无头浏览器把已做好的每一周、每个活动都真的玩一遍，再打开家长页和每一份打印材料，
+   最后换一个假的安卓外壳，看朗读、打印、导出、更新有没有交给外壳。
    运行：node tests/smoke.js   （需要 playwright）
    ?test=1 会关闭语音和等待，并给“下一步该点的地方”打上 data-tn 标记。 */
 const { chromium } = require('playwright');
@@ -54,6 +55,74 @@ async function play(page, base, act, query, first) {
     }
   }
   throw new Error('活动没有走到结束：' + act);
+}
+
+/* 安卓应用：外壳（android/）会在页面上放一个 window.CEAndroid。这里换成一个假的，记下网页交给外壳的事，
+   看朗读、打印、导出、更新是不是都交给了外壳（约定见 app/core/native.js）。外壳本身的测试在 android/ 里。 */
+async function androidShell(browser, base, fail) {
+  const ctx = await browser.newContext({ viewport: { width: 1024, height: 768 } });
+  await ctx.addInitScript(() => {
+    const calls = window.__calls = [];
+    const rec = name => function () { calls.push([name].concat([].slice.call(arguments))); };
+    window.CEAndroid = {
+      info: () => JSON.stringify({
+        shell: 1, app: '1 (test)', engine: '测试引擎', checking: false, msg: '', sources: [], builtin: ['https://example.com/'],
+        content: { v: 1794294861, sha: 'abc1234', from: 'apk' }, staged: { v: 1794300000, sha: 'def5678', from: 'update' }
+      }),
+      voices: () => JSON.stringify([
+        { name: '中文（台湾）1', voiceURI: 'cmn-tw-x-a', lang: 'cmn-TW', q: 400 },
+        { name: '中文（中国）1', voiceURI: 'cmn-cn-x-b', lang: 'cmn-CN', q: 300 },
+        { name: '中文（中国）2', voiceURI: 'cmn-cn-x-c', lang: 'cmn-CN', q: 400 },
+        { name: '英语（美国）1', voiceURI: 'en-us-x-d', lang: 'en-US', q: 400 }
+      ]),
+      // 外壳读完一句会回调 CE.Native.ended(编号)
+      speak(id, text, lang, voice) { calls.push(['speak', text, lang, voice]); setTimeout(() => window.CE.Native.ended(id), 5); },
+      stop: rec('stop'), print: rec('print'), saveText: rec('saveText'), setSources: rec('setSources'),
+      checkUpdate: rec('checkUpdate'), applyUpdate: rec('applyUpdate'), openTtsSettings: rec('openTtsSettings')
+    };
+  });
+  const p = await ctx.newPage();
+  p.on('pageerror', e => fail('安卓 pageerror: ' + e.message));
+  p.on('console', m => { if (m.type() === 'error') fail('安卓 console: ' + m.text()); });
+  const calls = name => p.evaluate(n => window.__calls.filter(c => c[0] === n), name);
+
+  // 朗读：不带 ?test=1 才会真的交出去。自动挑中国大陆、音质高的声音；一句读完才读下一句
+  await p.goto(base + '/#/');
+  await p.waitForSelector('.home');
+  const spoke = await p.evaluate(async () => ({
+    ok: await CE.Speech.say(['有2辆车', { t: 'car', lang: 'en' }]), zh: CE.Speech.zh.voiceURI, en: CE.Speech.en.voiceURI
+  }));
+  const said = (await calls('speak')).map(c => c.slice(1).join(' '));
+  if (!spoke.ok || spoke.zh !== 'cmn-cn-x-c' || spoke.en !== 'en-us-x-d' ||
+      said.join(' | ') !== '有两辆车 zh-CN cmn-cn-x-c | car en-US en-us-x-d') {
+    fail('安卓：朗读没有正确交给外壳：' + JSON.stringify({ spoke, said }));
+  }
+
+  // 家长页的“应用”一节，和交给外壳的几件事
+  await p.goto(base + '/?test=1#/parent');
+  await p.waitForSelector('#sec-ap [data-act="apply"]');
+  await p.click('#sec-ap [data-act="apply"]');
+  await p.click('#sec-ap [data-act="check"]');
+  await p.fill('#sec-ap textarea[data-k="sources"]', 'http://192.168.1.10:38080/');
+  await p.$eval('#sec-ap textarea[data-k="sources"]', t => t.dispatchEvent(new Event('change')));
+  await p.click('[data-act="tts"]');
+  await p.click('[data-act="export"]');
+  const saved = await calls('saveText');
+  let record = null;
+  try { record = JSON.parse(saved[0][3]); } catch (e) { /* 下面报错 */ }
+  if (!saved.length || saved[0][1] !== 'car-edu-record.json' || !record || record.v !== 1) fail('安卓：导出记录没有交给外壳');
+  for (const n of ['applyUpdate', 'checkUpdate', 'openTtsSettings']) if (!(await calls(n)).length) fail('安卓：没有调用 ' + n);
+  if ((await calls('setSources'))[0]?.[1] !== 'http://192.168.1.10:38080/') fail('安卓：更新地址没有交给外壳');
+  // 外壳说状态变了：家长页重画
+  await p.evaluate(() => { document.querySelector('#sec-ap').dataset.old = '1'; CE.Native.updated(); });
+  if (await p.$('#sec-ap[data-old]')) fail('安卓：外壳通知以后家长页没有重画');
+
+  // 打印交给系统
+  await p.goto(base + '/?test=1#/print/week-w1');
+  await p.click('.print-bar .go');
+  const printed = await calls('print');
+  if (!printed.length || !/第 1 周/.test(printed[0][1])) fail('安卓：打印没有交给外壳');
+  await ctx.close();
 }
 
 (async () => {
@@ -131,6 +200,9 @@ async function play(page, base, act, query, first) {
     }).length);
     if (over) fail(`打印材料 ${id} 有 ${over} 页的内容超出了纸面`);
   }
+  if (await page.evaluate(() => CE.Native !== null)) fail('在浏览器里打开时 CE.Native 应该是 null');
+
+  await androidShell(browser, base, fail);
 
   await browser.close();
   srv.close();

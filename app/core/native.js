@@ -1,7 +1,7 @@
 /* 安卓应用的外壳（android/）。页面在安卓应用里打开时，外壳会在页面上放一个 window.CEAndroid，
    把 WebView 自己做不到的事交给系统：朗读、打印、保存文件、检查更新。在浏览器里打开时 CE.Native 是 null，
    其余代码照常走浏览器自己的路。
-   这里是网页和外壳之间唯一的约定。改这里，要同时改外壳的 Bridge.java（android/app/src/main/java/.../Bridge.java）；
+   这里是网页和外壳之间唯一的约定。改这里，要同时改外壳的 Bridge（android/app/src/main/java/com/caredu/app/）和 tests/smoke.js 里的假外壳；
    网页要用到外壳的新能力时，外壳的版本（android/app/build.gradle.kts 里的 shell）要加一。 */
 (function (CE) {
   'use strict';

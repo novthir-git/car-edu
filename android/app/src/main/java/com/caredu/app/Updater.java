@@ -144,7 +144,7 @@ final class Updater {
         String from = "（来自 " + host(base) + "）";
         WebFiles.Version best = files.best();
         if (v <= best.v) return "已经是最新的" + from + "。";
-        if (m.getInt("shell") > BuildConfig.VERSION_CODE) return "有新内容，但要先下载安装新的应用（APK）" + from + "。";
+        if (m.getInt("shell") > BuildConfig.SHELL) return "有新内容，但要先下载安装新的应用（APK）" + from + "。";
         if (files.isBad(v)) return "有新内容，但上次没能打开，先不换" + from + "。";
 
         File zip = new File(files.dir, v + ".zip.part");

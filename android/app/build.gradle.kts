@@ -42,8 +42,10 @@ android {
         applicationId = "com.caredu.app"
         minSdk = 24
         targetSdk = 36
-        versionCode = shell
+        // 每次打包都比上一次大（按提交时间算，单位分钟），装新的 APK 时系统才认作“更新”
+        versionCode = maxOf(1L, contentV / 60).toInt()
         versionName = "$shell ($contentSha)"
+        buildConfigField("int", "SHELL", "$shell")
         buildConfigField("String", "UPDATE_URL", "\"$updateUrl\"")
     }
 
@@ -164,4 +166,8 @@ tasks.register<WebUpdate>("webUpdate") {
     manifest.set(contentJson)
     outputDir.set(layout.buildDirectory.dir("outputs/web-update"))
     outputs.upToDateWhen { false }
+}
+
+dependencies {
+    testImplementation("junit:junit:4.13.2")
 }
