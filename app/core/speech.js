@@ -8,6 +8,27 @@
 
   const norm = l => String(l || '').replace('_', '-').toLowerCase();
 
+  /* 给声音打分，自动选分最高的。同一台设备上常有好几个声音，音质差别很大：
+     - 神经网络语音最自然：Edge 的 “… Online (Natural)”、苹果下载的“优化/高品质”版本（voiceURI 里带 premium、enhanced）。
+     - Chrome 的 “Google 普通话 / Google US English” 是联网的，比系统自带的老声音好。
+     - 苹果的 compact 版本、Windows 的 Huihui、Kangkang 这类老声音最机械。
+     - 苹果还带一批搞怪的英文声音（Bubbles、Zarvox……），不能给孩子用。 */
+  const NOVELTY = /albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|fred|junior|kathy|ralph|grandma|grandpa|eddy|flo\b|reed|rocko|sandy|shelley/i;
+  function quality(v) {
+    const id = (v.name + ' ' + (v.voiceURI || '')).toLowerCase();
+    let q = 0;
+    if (/natural|neural|premium/.test(id)) q += 10;
+    else if (/enhanced|增强|优化|高品质|siri/.test(id)) q += 7;
+    else if (/google/.test(id)) q += 5;
+    if (/xiaoxiao|xiaoyi|yunxi|aria|jenny|ava|samantha/.test(id)) q += 2;
+    if (/compact|huihui|kangkang|yaoyao|espeak/.test(id)) q -= 4;
+    if (NOVELTY.test(v.name)) q -= 50;
+    return q;
+  }
+
+  // 苹果设备上同名的声音可能有两个（普通版和优化版），所以用 voiceURI 认；旧记录里存的是名字，也认
+  const chosen = (list, key) => (key ? list.find(v => v.voiceURI === key) || list.find(v => v.name === key) : null);
+
   S.refresh = function () {
     if (!S.supported) return;
     let vs = [];
@@ -19,21 +40,24 @@
       const l = norm(v.lang);
       return (l.indexOf('zh') === 0 || l.indexOf('cmn') === 0) && !/hk|yue|mo/.test(l);   // 排除粤语
     });
+    // 普通话（大陆）优先，其次看音质
     const rz = v => {
       const l = norm(v.lang);
-      return (l.indexOf('zh-cn') === 0 || l.indexOf('hans') >= 0 || l === 'cmn-cn' ? 4 : 0) + (v.localService ? 1 : 0);
+      return (l.indexOf('zh-cn') === 0 || l.indexOf('hans') >= 0 || l === 'cmn-cn' ? 20 : 0) + quality(v);
     };
     S.zhList = zh;
-    S.zh = zh.find(v => v.name === st.voiceZh) || zh.slice().sort((a, b) => rz(b) - rz(a))[0] || null;
+    S.zh = chosen(zh, st.voiceZh) || zh.slice().sort((a, b) => rz(b) - rz(a))[0] || null;
 
     const en = vs.filter(v => norm(v.lang).indexOf('en') === 0);
     const re = v => {
       const l = norm(v.lang);
-      return (l === 'en-us' ? 4 : l === 'en-gb' ? 2 : 0) + (v.localService ? 1 : 0);
+      return (l === 'en-us' ? 4 : l === 'en-gb' ? 2 : 0) + quality(v);
     };
-    S.enList = en;
-    S.en = en.find(v => v.name === st.voiceEn) || en.slice().sort((a, b) => re(b) - re(a))[0] || null;
+    S.enList = en.filter(v => !NOVELTY.test(v.name));
+    S.en = chosen(en, st.voiceEn) || en.slice().sort((a, b) => re(b) - re(a))[0] || null;
   };
+
+  S.quality = quality;
 
   S.init = function () {
     if (!S.supported) return;
@@ -46,9 +70,13 @@
     if (S.supported) { try { speechSynthesis.cancel(); } catch (e) { /* 忽略 */ } }
   };
 
+  // 单独的“2”后面跟量词时要读“两”：2辆 → 两辆（12辆、20辆不变）。语音引擎会读成“二辆”
+  S.spoken = t => String(t).replace(/(^|[^\d])2(?=[辆块个颗只本张])/g, '$1两');
+
   // parts: 字符串，或 [{t:'文字', lang:'en'}, ...]。返回 Promise，读完（或被打断）后结束。
   S.say = function (parts) {
-    parts = [].concat(parts || []).map(p => (typeof p === 'string' ? { t: p } : p)).filter(p => p && p.t);
+    parts = [].concat(parts || []).map(p => (typeof p === 'string' ? { t: p } : p)).filter(p => p && p.t)
+      .map(p => (p.lang === 'en' ? p : Object.assign({}, p, { t: S.spoken(p.t) })));
     S.stop();
     const my = token;
     if (CE.TEST || !S.supported || !parts.length) return Promise.resolve(false);
@@ -65,7 +93,7 @@
         const v = en ? S.en : S.zh;
         if (v) u.voice = v;
         u.rate = en ? rate * 0.9 : rate;
-        u.pitch = 1.1;
+        u.pitch = 1;   // 调高音调会让新式语音变假
         let done = false;
         // 有些设备不会触发 onend，用估算时长兜底，保证流程不会卡住
         const guess = 900 + p.t.length * (en ? 110 : 380) / rate;
