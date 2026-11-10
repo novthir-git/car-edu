@@ -1,5 +1,5 @@
 /* 打印材料的版式。尺寸用毫米，按 A4 纵向设计。屏幕上是预览，打印时每个 .sheet 一页。 */
-.print-view { background: #e3e8ef; min-height: 100vh; padding-bottom: 24px; }
+.print-view { background: #e3e8ef; min-height: 100%; padding-bottom: 24px; }
 .print-bar { position: sticky; top: 0; z-index: 5; display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 10px 16px; background: #fff; border-bottom: 1px solid #ccd3de; font-weight: 700; }
 .sheets { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 16px; overflow-x: auto; }
 .sheet { background: #fff; color: #111; width: 210mm; height: 296mm; padding: 10mm; flex: none; position: relative; overflow: hidden; box-shadow: 0 2px 10px rgba(0, 0, 0, .18); font-family: var(--sans); }
@@ -64,7 +64,7 @@
 @media print {
   html, body { height: auto; background: #fff !important; }
   .no-print { display: none !important; }
-  #app, .print-view { display: block; min-height: 0; background: #fff; padding: 0; }
+  #app, .print-view { display: block; height: auto; min-height: 0; background: #fff; padding: 0; }
   .sheets { display: block; padding: 0; overflow: visible; }
   .sheet { box-shadow: none; margin: 0; break-after: page; page-break-after: always; }
   .sheet:last-child { break-after: auto; page-break-after: auto; }

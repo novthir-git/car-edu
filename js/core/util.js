@@ -29,9 +29,12 @@ window.CE = window.CE || {};
     if (s < 60) return s + ' 秒';
     return Math.floor(s / 60) + ' 分' + (s % 60 ? ' ' + (s % 60) + ' 秒' : '');
   };
+  // 换页。当前页面记在 CE.cur 里；地址栏的 # 只是跟着同步，方便后退和收藏。
+  // CE.EMBED（嵌在别的页面里预览）时不碰地址栏。
   U.go = hash => {
-    if (location.hash === hash) window.dispatchEvent(new Event('hashchange'));
-    else location.hash = hash;
+    CE.cur = hash;
+    if (!CE.EMBED) { try { if (location.hash !== hash) location.hash = hash; } catch (e) { /* 忽略 */ } }
+    CE.route();
   };
   // 去掉拼音声调，用来判断同音字
   U.bare = py => String(py).normalize('NFD').replace(/[̀-ͯ]/g, '');

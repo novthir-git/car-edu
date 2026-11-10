@@ -97,10 +97,14 @@
     if (!it) return U.go('#/parent');
     app.innerHTML =
       `<div class="print-view">` +
-        `<div class="print-bar no-print"><button class="btn sm back">◀ 返回</button><span>${U.esc(it.t)}</span><button class="btn sm go">打印</button></div>` +
+        `<div class="print-bar no-print"><button class="btn sm back">◀ 返回</button><span>${U.esc(it.t)}</span>` +
+          // 嵌在别的页面里预览时浏览器不让打印，换成一句说明
+          (CE.EMBED ? `<span class="muted">预览里不能打印，请在电脑上打开项目后打印</span>` : `<button class="btn sm go">打印</button>`) +
+        `</div>` +
         `<div class="sheets">${it.f()}</div>` +
       `</div>`;
     U.$('.back', app).addEventListener('click', () => U.go('#/parent'));
-    U.$('.go', app).addEventListener('click', () => window.print());
+    const go = U.$('.go', app);
+    if (go) go.addEventListener('click', () => window.print());
   };
 })(window.CE);

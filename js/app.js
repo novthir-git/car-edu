@@ -4,7 +4,7 @@
   const U = CE.U, S = CE.Store;
 
   function route() {
-    const raw = location.hash.replace(/^#/, '') || '/';
+    const raw = (CE.cur || '#/').replace(/^#/, '') || '/';
     const parts = raw.split('?');
     const seg = parts[0].split('/').filter(Boolean);
     const q = new URLSearchParams(parts[1] || '');
@@ -34,11 +34,18 @@
   function boot() {
     S.load();
     CE.Speech.init();
-    window.addEventListener('hashchange', route);
+    CE.route = route;
+    CE.cur = (!CE.EMBED && location.hash) || '#/';
+    // 浏览器的后退、前进，或者手动改地址栏
+    window.addEventListener('hashchange', () => {
+      if (CE.EMBED || location.hash === CE.cur) return;
+      CE.cur = location.hash || '#/';
+      route();
+    });
     window.addEventListener('pagehide', S.flush);
     document.addEventListener('visibilitychange', () => { if (document.hidden) S.flush(); });
     route();
-    if (!CE.TEST && !/^#\/(parent|print)/.test(location.hash)) CE.Splash.show();
+    if (!CE.TEST && !/^#\/(parent|print)/.test(CE.cur)) CE.Splash.show();
     else CE.unlocked = true;
   }
 

@@ -208,7 +208,7 @@
         el.remove();
         CE.unlocked = true;
         CE.Sfx.unlock(); CE.Sfx.horn();
-        if (!location.hash || location.hash === '#/' || location.hash === '#') CE.Home.greet();
+        if (!CE.cur || CE.cur === '#/' || CE.cur === '#') CE.Home.greet();
       }, { once: true });
     }
   };

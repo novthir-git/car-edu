@@ -114,7 +114,7 @@
     const groups = [];
     CE.Print.LIST.forEach(it => { if (groups.indexOf(it.g) < 0) groups.push(it.g); });
     return groups.map(g => `<h3>${g}</h3><div class="links">` +
-      CE.Print.LIST.filter(it => it.g === g).map(it => `<a class="plink" href="#/print/${it.id}">${U.esc(it.t)}</a>`).join('') +
+      CE.Print.LIST.filter(it => it.g === g).map(it => `<button class="plink" data-go="#/print/${it.id}">${U.esc(it.t)}</button>`).join('') +
       `</div>`).join('') +
       `<p class="muted">A4 纸，打开后点“打印”。描红页没有笔顺提示，第一次写请您示范。</p>`;
   }
@@ -130,6 +130,8 @@
       `<div class="row"><button class="btn sm" data-act="export">导出记录</button>` +
       `<label class="btn sm filebtn">导入记录<input type="file" accept="application/json,.json" data-act="import" hidden></label>` +
       `<button class="btn sm danger" data-act="reset">清空记录</button></div>` +
+      `<p class="warn" id="data-msg" hidden></p>` +
+      `<textarea id="data-out" rows="6" readonly hidden aria-label="导出的记录"></textarea>` +
       (S.ok ? '' : `<p class="warn">这个浏览器不允许保存数据（可能是无痕模式），关闭页面后记录会丢失。</p>`) +
       `<label class="notes">观察笔记（纸上的活动、他说过的话，都可以记在这里）<textarea data-k="notes" rows="4">${U.esc(S.data.notes)}</textarea></label>`;
   }
@@ -161,6 +163,7 @@
     U.$$('.doc-nav button', app).forEach(b => b.addEventListener('click', () => {
       U.$('#sec-' + b.dataset.sec, app).scrollIntoView({ behavior: 'smooth', block: 'start' });
     }));
+    U.$$('[data-go]', app).forEach(b => b.addEventListener('click', () => U.go(b.dataset.go)));
     U.$$('.zc', app).forEach(b => b.addEventListener('click', () => {
       const id = 'zh:' + b.dataset.c, it = S.data.items[id];
       S.setManual(id, !it || it.m == null ? 1 : it.m === 1 ? 0 : null);
@@ -176,19 +179,32 @@
       S.flush();
       CE.Speech.refresh();
     }));
+    const say = t => { const m = U.$('#data-msg', app); m.textContent = t; m.hidden = false; };
     const acts = {
       home: () => U.go('#/'),
       'try-zh': () => CE.Speech.say('你好！我是小风。我们一起去车车镇吧！'),
       'try-en': () => CE.Speech.say([{ t: 'Hello! A red car, a blue bus, a yellow truck.', lang: 'en' }]),
       export: () => {
         S.flush();
+        if (CE.EMBED) {   // 预览环境不允许下载文件，改成显示出来让家长复制
+          const out = U.$('#data-out', app);
+          out.value = JSON.stringify(S.data);
+          out.hidden = false; out.focus(); out.select();
+          say('这里不能下载文件。请全选下面的文字，复制后自己保存。');
+          return;
+        }
         const a = document.createElement('a');
         a.href = URL.createObjectURL(new Blob([JSON.stringify(S.data, null, 2)], { type: 'application/json' }));
         a.download = 'car-edu-record.json';
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(() => URL.revokeObjectURL(a.href), 2000);
       },
-      reset: () => { if (window.confirm('确定清空全部学习记录吗？这个操作不能撤销。')) { S.reset(); Pa.render(app); } }
+      // 第一次点只是提醒，5 秒内再点一次才真的清空
+      reset: () => {
+        if (Pa.armed && Date.now() - Pa.armed < 5000) { Pa.armed = 0; S.reset(); Pa.render(app); return; }
+        Pa.armed = Date.now();
+        say('清空后不能恢复。确定的话，请在 5 秒内再点一次“清空记录”。');
+      }
     };
     U.$$('button[data-act]', app).forEach(b => b.addEventListener('click', () => acts[b.dataset.act]()));
     const imp = U.$('input[data-act="import"]', app);
@@ -198,7 +214,7 @@
       r.onload = () => {
         let ok = false;
         try { ok = S.adopt(JSON.parse(String(r.result))); } catch (e) { ok = false; }
-        if (ok) { S.flush(); Pa.render(app); } else window.alert('这个文件不是本应用导出的记录。');
+        if (ok) { S.flush(); Pa.render(app); } else say('这个文件不是本应用导出的记录。');
       };
       r.readAsText(f);
     });
