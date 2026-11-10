@@ -1,4 +1,4 @@
-/* 家长页：兴趣观察、各科掌握情况、设置、数据导出、打印入口、一年大纲。 */
+/* 家长页：兴趣观察、各科掌握情况、设置、数据导出、打印入口、大纲。 */
 (function (CE) {
   'use strict';
   const U = CE.U, S = CE.Store, P = CE.Plan;
@@ -111,18 +111,23 @@
   }
 
   function prints() {
-    const groups = [];
-    CE.Print.LIST.forEach(it => { if (groups.indexOf(it.g) < 0) groups.push(it.g); });
+    const groups = CE.Print.GROUPS.filter(g => CE.Print.LIST.some(it => it.g === g));
     return groups.map(g => `<h3>${g}</h3><div class="links">` +
       CE.Print.LIST.filter(it => it.g === g).map(it => `<button class="plink" data-go="#/print/${it.id}">${U.esc(it.t)}</button>`).join('') +
       `</div>`).join('') +
       `<p class="muted">A4 纸，打开后点“打印”。描红页没有笔顺提示，第一次写请您示范。</p>`;
   }
 
-  function year() {
-    return CE.YEAR.map(s => `<div class="stage"><h3>第 ${s.n} 阶段　${s.title}<small>${s.weeks}${s.ready ? '　·　' + s.ready : ''}</small></h3>` +
-      `<dl><dt>识字</dt><dd>${s.zh}</dd><dt>数学</dt><dd>${s.math}</dd><dt>英语</dt><dd>${s.en}</dd><dt>探索</dt><dd>${s.more}</dd></dl></div>`).join('') +
-      `<p class="muted">只有第 1–2 周做好了。后面的内容先不做，等看到他的反应再决定方向和比例。完整大纲见仓库里的 docs/year-plan.md。</p>`;
+  function outline() {
+    // “已做好几周”是按实际登记的周数算出来的，不用手动维护
+    return CE.GRADES.map(g => {
+      const made = CE.WEEKS.filter(w => w.grade === g.id);
+      const ready = s => made.filter(w => w.n >= s.from && w.n <= s.to).length;
+      return `<p><b>${g.title}（${g.age}）</b>　${g.span}，计划 ${g.weeks} 周，已做好 ${made.length} 周。完整大纲见仓库里的 ${g.doc}。</p>` +
+        g.stages.map(s => `<div class="stage"><h3>第 ${s.n} 阶段　${s.title}<small>第 ${s.from}–${s.to} 周${ready(s) ? '　·　已做好 ' + ready(s) + ' 周' : ''}</small></h3>` +
+          `<dl><dt>识字</dt><dd>${s.zh}</dd><dt>数学</dt><dd>${s.math}</dd><dt>英语</dt><dd>${s.en}</dd><dt>探索</dt><dd>${s.more}</dd></dl></div>`).join('');
+    }).join('') +
+      `<p class="muted">后面的内容先不做，等看到他的反应再决定方向和比例。升到下一个年级时，再定下一个年级的大纲。</p>`;
   }
 
   function data() {
@@ -138,7 +143,7 @@
 
   const SECTIONS = [
     ['ov', '概览', overview], ['in', '兴趣观察', interest], ['zh', '识字', zh], ['ma', '数学', math], ['en', '英语', en],
-    ['pr', '打印', prints], ['yr', '一年大纲', year], ['st', '设置', settings], ['da', '数据', data]
+    ['pr', '打印', prints], ['yr', '大纲', outline], ['st', '设置', settings], ['da', '数据', data]
   ];
 
   Pa.show = function (app) {

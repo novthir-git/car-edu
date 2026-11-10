@@ -1,4 +1,4 @@
-/* 入口：根据地址栏的 # 部分切换页面。 */
+/* 入口：路由和启动。必须排在所有内容之后加载。 */
 (function (CE) {
   'use strict';
   const U = CE.U, S = CE.Store;

@@ -1,8 +1,29 @@
-/* 故事阅读器：每页自动朗读，突出显示的字可以点读。 */
+/* 故事阅读器：每页自动朗读，突出显示的字可以点读。讲完之后还有回忆题。
+
+   故事的写法（各周的文件里用 CE.addStory 登记）：
+     title 标题；chars 这个故事要教的字；
+     pages 每页一两句话，配一幅场景：
+       bg 背景；sp 画面里的角色和道具（x,y 是底边中点，画布 800x450）；
+       t 正文；hi 本页要突出的字（可点读）。
+     quiz 回忆题：q 问题，ans 答案，选项是 who（角色）、prop（道具）、num（数字）三种之一。 */
 (function (CE) {
   'use strict';
   const U = CE.U, A = CE.Art;
   const S = CE.Story = {};
+
+  S.quiz = function (api, story) {
+    const qs = story.quiz;
+    return CE.Quiz.run(api, {
+      rounds: qs.length, make: i => {
+        const q = qs[i];
+        let opts;
+        if (q.who) opts = q.who.map(k => ({ k: k, html: A.who(k) + `<span class="cap">${A.CHARS[k].name}</span>` }));
+        else if (q.prop) opts = q.prop.map(k => ({ k: k, html: A.prop(k) }));
+        else opts = q.num.map(n => ({ k: String(n), html: `<span class="num">${n}</span>` }));
+        return { say: q.q, text: q.q, opts: opts, ans: String(q.ans), optCls: q.num ? 'txt' : 'pic' };
+      }
+    });
+  };
 
   S.markup = function (t, hi) {
     hi = hi || [];

@@ -9,27 +9,41 @@
 <meta name="theme-color" content="#bfe8ff">
 <title>车车镇学习乐园</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='6' y='26' width='52' height='20' rx='8' fill='%233b8beb' stroke='%232b2b3a' stroke-width='3'/%3E%3Cpath d='M18 26q6-14 16-14h6q8 0 12 14z' fill='%233b8beb' stroke='%232b2b3a' stroke-width='3'/%3E%3Ccircle cx='20' cy='48' r='8' fill='%233a3a4a'/%3E%3Ccircle cx='46' cy='48' r='8' fill='%233a3a4a'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="css/app.css">
-<link rel="stylesheet" href="css/print.css">
+<link rel="stylesheet" href="app/css/app.css">
+<link rel="stylesheet" href="app/css/print.css">
 </head>
 <body>
 <div id="app"></div>
 <noscript>这个页面需要开启 JavaScript 才能使用。</noscript>
-<script src="js/core/util.js"></script>
-<script src="js/core/store.js"></script>
-<script src="js/core/speech.js"></script>
-<script src="js/core/art.js"></script>
-<script src="js/content/chars.js"></script>
-<script src="js/content/stories.js"></script>
-<script src="js/content/plan.js"></script>
-<script src="js/engines/quiz.js"></script>
-<script src="js/engines/story.js"></script>
-<script src="js/engines/given.js"></script>
-<script src="js/engines/explore.js"></script>
-<script src="js/activities.js"></script>
-<script src="js/ui/screens.js"></script>
-<script src="js/ui/parent.js"></script>
-<script src="js/ui/print.js"></script>
-<script src="js/app.js"></script>
+
+<!-- 程序：很少改动 -->
+<script src="app/core/util.js"></script>
+<script src="app/core/store.js"></script>
+<script src="app/core/speech.js"></script>
+<script src="app/core/art.js"></script>
+<script src="app/core/course.js"></script>
+<script src="app/engines/quiz.js"></script>
+<script src="app/engines/story.js"></script>
+<script src="app/engines/given.js"></script>
+<script src="app/engines/explore.js"></script>
+<script src="app/ui/screens.js"></script>
+<script src="app/ui/parent.js"></script>
+<script src="app/ui/print.js"></script>
+
+<!-- 内容 · 题库和反复出现的练习 -->
+<script src="content/library/zh-chars.js"></script>
+<script src="content/library/zh.js"></script>
+<script src="content/library/math.js"></script>
+<script src="content/library/en-words.js"></script>
+<script src="content/library/en.js"></script>
+<script src="content/library/explore.js"></script>
+
+<!-- 内容 · 幼儿园中班（k2）。每做好一周，在这里加一行 -->
+<script src="content/k2/grade.js"></script>
+<script src="content/k2/w01.js"></script>
+<script src="content/k2/w02.js"></script>
+
+<!-- 启动：必须在最后 -->
+<script src="app/main.js"></script>
 </body>
 </html>

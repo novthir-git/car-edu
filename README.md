@@ -4,7 +4,8 @@
 
 - 形式：**故事 + 互动游戏 + 可打印的纸质材料**
 - 设备：平板、手机、电脑的浏览器都能用
-- 进度：一年大纲已定（见 [docs/year-plan.md](docs/year-plan.md)），**第 1–2 周的内容已做好**，后面的内容看孩子的反应再做
+- 长期：内容**按年级分档**，一档一档往上加。现在是幼儿园中班这一档
+- 进度：中班的大纲已定（见 [docs/k2/plan.md](docs/k2/plan.md)），**第 1–2 周的内容已做好**，后面的内容看孩子的反应再做
 
 ## 怎么打开
 
@@ -65,29 +66,56 @@ python3 -m http.server 8000
 
 ## 目录
 
+分成三块：**程序**（`app/`，很少改）、**内容**（`content/`，一直增长）、**规划和记录**（`docs/`）。
+
 ```
-index.html            入口
-css/app.css           界面样式
-css/print.css         打印版式
-js/core/              存储、语音和音效、SVG 绘图
-js/content/           字库、故事、每周安排
-js/engines/           选择题、故事阅读、停车场、红绿灯、涂色、轮子实验室
-js/activities.js      活动登记表
-js/ui/                主页、每日任务、家长页、打印页
-docs/year-plan.md     一年大纲
-tests/smoke.js        自动把所有活动玩一遍的测试
+index.html              入口，双击即可打开
+app/                    程序：页面和玩法。内容再多，这里也不用跟着改
+  core/                 存储、语音和音效、绘图、课程登记处
+  engines/              玩法：选择题、故事阅读、停车场、红绿灯、涂色、轮子实验室
+  ui/                   孩子的页面、家长页、打印版式
+  css/                  界面样式、打印样式
+  main.js               路由和启动
+content/                内容：按年级分档
+  library/              各年级共用：字库、英语词库、反复出现的练习（按学科分文件）
+  k2/                   幼儿园中班（现在）
+    grade.js            这个年级的阶段目标
+    w01.js              第 1 周：故事、新字新词、五天的安排、打印材料
+    w02.js              第 2 周
+docs/
+  growth-log.md         成长记录：每次的观察和调整决定，按时间往后加
+  k2/plan.md            中班大纲
+tests/smoke.js          自动把所有活动玩一遍的测试
 ```
+
+年级的代号和先后：
+
+| 目录 | 年级 | 大约时间 | 状态 |
+| --- | --- | --- | --- |
+| `k2` | 幼儿园中班 | 2026 年 11 月 – 2027 年 8 月 | 进行中 |
+| `k3` | 幼儿园大班 | 2027 年 9 月起 | 升班时再规划 |
+| `g1` 起 | 小学一年级起 | 2028 年 9 月起 | 到时候再规划 |
+
+没开始的年级不建目录，也不提前写内容。
 
 ## 怎么加一周内容
 
-1. 新故事写进 `js/content/stories.js`（每页一两句话，加场景里的角色位置）。
-2. 新字如果不在字库里，加到 `js/content/chars.js`。
-3. 在 `js/activities.js` 用 `def(...)` 登记这一周的新活动。大多数练习可以直接复用选择题引擎。
-4. 在 `js/content/plan.js` 的 `WEEKS` 里加一项，排好 5 天的活动。
-5. 运行测试确认每个活动都能走通：
+1. 先看 `docs/growth-log.md` 最后一条记录，再对照这个年级的大纲，定这一周教什么。
+2. 复制上一周的文件，改成新的一周，例如 `content/k2/w03.js`。里面依次是：故事、这一周新教的字和词、五天的安排、打印材料。
+3. 新字如果不在字库里，加到 `content/library/zh-chars.js`；新的英语词加到 `content/library/en-words.js`。
+4. 在 `index.html` 里加一行 `<script src="content/k2/w03.js"></script>`，放在上一周的后面。
+5. 运行测试，确认每个活动都能走通：
 
 ```bash
 node tests/smoke.js
 ```
 
-测试需要 [Playwright](https://playwright.dev/)。
+测试需要 [Playwright](https://playwright.dev/)。忘了第 4 步、活动 id 写错或重复，测试都会直接报出来。
+
+## 升到下一个年级时
+
+1. 在 `docs/growth-log.md` 里写一条回看：这个年级学到了哪里、喜欢什么、不喜欢什么。
+2. 据此写下一个年级的大纲，例如 `docs/k3/plan.md`。
+3. 新建 `content/k3/grade.js`（照 `content/k2/grade.js` 写）和第一周的文件，在 `index.html` 里加载。
+
+上一个年级没做完的内容不用补做；有用的并进新年级的大纲。

@@ -1,4 +1,4 @@
-/* 冒烟测试：用无头浏览器把两周的每个活动都真的玩一遍，再打开家长页和每一份打印材料。
+/* 冒烟测试：用无头浏览器把已做好的每一周、每个活动都真的玩一遍，再打开家长页和每一份打印材料。
    运行：node tests/smoke.js   （需要 playwright）
    ?test=1 会关闭语音和等待，并给“下一步该点的地方”打上 data-tn 标记。 */
 const { chromium } = require('playwright');
@@ -20,6 +20,14 @@ function serve() {
     });
     srv.listen(0, '127.0.0.1', () => resolve(srv));
   });
+}
+
+// 新文件忘了在 index.html 里加 <script> 不会报错，只是内容悄悄不出现，所以单独查
+function notLoaded() {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const walk = dir => [].concat(...fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true }).map(e =>
+    (e.isDirectory() ? walk(dir + '/' + e.name) : /\.js$/.test(e.name) ? [dir + '/' + e.name] : [])));
+  return walk('app').concat(walk('content')).filter(f => html.indexOf(`src="${f}"`) < 0);
 }
 
 async function play(page, base, act, query) {
@@ -57,6 +65,12 @@ async function play(page, base, act, query) {
   await page.goto(base + '/?test=1#/');
   await page.waitForSelector('.home');
   const days = await page.evaluate(() => CE.Plan.days().map(d => ({ id: d.id, acts: d.acts })));
+
+  const missing = notLoaded();
+  if (missing.length) throw new Error('index.html 里没有加载：' + missing.join(', '));
+  const unknown = await page.evaluate(() =>
+    [].concat(...CE.WEEKS.map(w => [].concat(...w.days, w.extra))).filter(a => !CE.ACTS[a]));
+  if (unknown.length) throw new Error('周安排里用了没登记的活动：' + unknown.join(', '));
 
   let played = 0;
   for (const d of days) {

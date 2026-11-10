@@ -29,6 +29,14 @@ window.CE = window.CE || {};
     if (s < 60) return s + ' 秒';
     return Math.floor(s / 60) + ' 分' + (s % 60 ? ' ' + (s % 60) + ' 秒' : '');
   };
+  // 打乱顺序，尽量不让同一项连着出现
+  U.mix = list => {
+    for (let t = 0; t < 30; t++) {
+      const a = U.shuffle(list);
+      if (a.every((x, i) => i === 0 || x !== a[i - 1])) return a;
+    }
+    return U.shuffle(list);
+  };
   // 换页。当前页面记在 CE.cur 里；地址栏的 # 只是跟着同步，方便后退和收藏。
   // CE.EMBED（嵌在别的页面里预览）时不碰地址栏。
   U.go = hash => {
