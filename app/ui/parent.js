@@ -91,10 +91,18 @@
     }).join('') + `</div>`;
   }
 
+  // 声音的好坏取决于设备里装了哪些语音，网页没法自己下载，只能请家长在设备上装好
+  const VOICE_TIP = 'iPad / iPhone：设置 → 辅助功能 → 朗读内容 → 声音 → 中文（中国大陆），下载带“优化”或“高品质”的声音，回来刷新页面。' +
+    '电脑：用 Edge 浏览器打开，有自然的“晓晓”声音。安卓：在“文字转语音”设置里选 Google 引擎并下载普通话。';
+
   function settings() {
     const st = S.data.settings, sp = CE.Speech;
     const sel = (list, cur) => `<option value="">自动选择</option>` +
-      (list || []).map(v => `<option value="${U.esc(v.name)}" ${v.name === cur ? 'selected' : ''}>${U.esc(v.name)}（${U.esc(v.lang)}）</option>`).join('');
+      (list || []).slice().sort((a, b) => sp.quality(b) - sp.quality(a)).map(v => {
+        const key = v.voiceURI || v.name, q = sp.quality(v);
+        const tag = q >= 7 ? '，自然' : q < 0 ? '，较机械' : '';
+        return `<option value="${U.esc(key)}" ${key === cur || v.name === cur ? 'selected' : ''}>${U.esc(v.name)}（${U.esc(v.lang)}${tag}）</option>`;
+      }).join('');
     const status = !sp.supported ? '这个浏览器不支持语音朗读。屏幕上会显示文字，需要您读给孩子听。'
       : !sp.zh ? '没有找到中文语音。可以点下面的“试听”确认；如果没有声音，需要您读给孩子听，或换一台设备/浏览器。'
         : `中文语音：${U.esc(sp.zh.name)}；英文语音：${sp.en ? U.esc(sp.en.name) : '没有找到'}`;
@@ -107,6 +115,7 @@
       `<label>英文语音 <select data-k="voiceEn">${sel(sp.enList, st.voiceEn)}</select></label>` +
       `<p class="muted">${status}</p>` +
       `<div class="row"><button class="btn sm" data-act="try-zh">试听中文</button><button class="btn sm" data-act="try-en">试听英文</button></div>` +
+      (sp.zh && sp.quality(sp.zh) < 5 ? `<p class="warn">现在用的中文语音比较机械。${VOICE_TIP}</p>` : `<p class="muted">声音听着机械的话：${VOICE_TIP}</p>`) +
       `</div>`;
   }
 
