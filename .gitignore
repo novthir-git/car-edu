@@ -1,3 +1,12 @@
 node_modules/
 .DS_Store
 *.log
+
+# 安卓：构建输出、本机的 SDK 路径、签名钥匙（钥匙放在 GitHub Secrets，不进仓库）
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.keystore
+*.jks
+*.p12

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 更新包可以放在家里 NAS 的 http 地址上（宽带常封 443，也不好弄证书）。
+     更新包带签名，被改过会被发现（见 Updater.java），所以允许不加密的连接。网页本身不联网。 -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

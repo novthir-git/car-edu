@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 7 用的图标（8.0 起用 drawable-anydpi-v26 里的自适应图标）：天蓝色圆底加一辆车 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="@color/sky" />
+        </shape>
+    </item>
+    <item android:drawable="@drawable/ic_launcher_car" />
+</layer-list>

@@ -2,9 +2,26 @@
    孩子还不识字，所有提示都靠这里读出来。没有中文语音的设备上，屏幕会显示文字，请家长代读。 */
 (function (CE) {
   'use strict';
-  const S = CE.Speech = { supported: 'speechSynthesis' in window, zh: null, en: null, voices: [] };
   const keep = [];   // 保留引用，避免部分浏览器提前回收导致 onend 不触发
   let token = 0;
+
+  /* 朗读引擎：浏览器自带的语音合成。在安卓应用里换成系统的朗读（CE.Native.tts），
+     因为 WebView 不支持浏览器的语音合成。两套的用法一样：voices() 列出声音，speak() 读一句，读完调 done。 */
+  const E = CE.Native ? CE.Native.tts : {
+    voices: () => speechSynthesis.getVoices() || [],
+    cancel: () => speechSynthesis.cancel(),
+    speak(text, lang, voice, rate, done) {
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = lang;
+      if (voice) u.voice = voice;
+      u.rate = rate;
+      u.pitch = 1;   // 调高音调会让新式语音变假
+      u.onend = done; u.onerror = done;
+      keep.push(u); if (keep.length > 30) keep.shift();
+      speechSynthesis.speak(u);
+    }
+  };
+  const S = CE.Speech = { supported: !!CE.Native || 'speechSynthesis' in window, zh: null, en: null, voices: [] };
 
   const norm = l => String(l || '').replace('_', '-').toLowerCase();
 
@@ -22,6 +39,9 @@
     else if (/google/.test(id)) q += 5;
     if (/xiaoxiao|xiaoyi|yunxi|aria|jenny|ava|samantha/.test(id)) q += 2;
     if (/compact|huihui|kangkang|yaoyao|espeak/.test(id)) q -= 4;
+    // 安卓系统的声音自带音质等级（300 普通，400 高，500 很高）；要联网的声音断网时读不出来，稍微往后排
+    if (v.q) q += v.q >= 500 ? 10 : v.q >= 400 ? 7 : v.q < 300 ? -4 : 0;
+    if (v.net) q -= 1;
     if (NOVELTY.test(v.name)) q -= 50;
     return q;
   }
@@ -32,7 +52,7 @@
   S.refresh = function () {
     if (!S.supported) return;
     let vs = [];
-    try { vs = speechSynthesis.getVoices() || []; } catch (e) { /* 忽略 */ }
+    try { vs = E.voices() || []; } catch (e) { /* 忽略 */ }
     S.voices = vs;
     const st = CE.Store.data.settings;
 
@@ -62,12 +82,13 @@
   S.init = function () {
     if (!S.supported) return;
     S.refresh();
-    try { speechSynthesis.addEventListener('voiceschanged', S.refresh); } catch (e) { /* 旧浏览器 */ }
+    // 安卓应用里，声音准备好或换了引擎时，外壳会调 CE.Native.voicesChanged()
+    if (!CE.Native) { try { speechSynthesis.addEventListener('voiceschanged', S.refresh); } catch (e) { /* 旧浏览器 */ } }
   };
 
   S.stop = function () {
     token++;
-    if (S.supported) { try { speechSynthesis.cancel(); } catch (e) { /* 忽略 */ } }
+    if (S.supported) { try { E.cancel(); } catch (e) { /* 忽略 */ } }
   };
 
   // 单独的“2”后面跟量词时要读“两”：2辆 → 两辆（12辆、20辆不变）。语音引擎会读成“二辆”
@@ -88,12 +109,6 @@
         if (i >= parts.length) return resolve(true);
         const p = parts[i++];
         const en = p.lang === 'en';
-        const u = new SpeechSynthesisUtterance(p.t);
-        u.lang = en ? 'en-US' : 'zh-CN';
-        const v = en ? S.en : S.zh;
-        if (v) u.voice = v;
-        u.rate = en ? rate * 0.9 : rate;
-        u.pitch = 1;   // 调高音调会让新式语音变假
         let done = false;
         // 有些设备不会触发 onend，用估算时长兜底，保证流程不会卡住
         const guess = 900 + p.t.length * (en ? 110 : 380) / rate;
@@ -103,9 +118,7 @@
           setTimeout(next, p.gap || 150);
         };
         const tm = setTimeout(fin, guess);
-        u.onend = fin; u.onerror = fin;
-        keep.push(u); if (keep.length > 30) keep.shift();
-        try { speechSynthesis.speak(u); } catch (e) { fin(); }
+        try { E.speak(p.t, en ? 'en-US' : 'zh-CN', en ? S.en : S.zh, en ? rate * 0.9 : rate, fin); } catch (e) { fin(); }
       };
       setTimeout(next, 70);   // cancel 之后立刻 speak 在部分浏览器会丢失
     });
