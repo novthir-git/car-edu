@@ -19,7 +19,7 @@
     // 只在“自由玩”里出现的活动
     extra: ['color-dashan', 'color-xiaoshui'],
     // 纸：这一周要打印的。给家长的那一页会自动排在最前面，不用写在这里
-    prints: ['color-atu', 'color-dashan', 'color-xiaoshui', 'draw-car', 'book-2', 'trace-w2', 'trace-num', 'count-2', 'cards-en-2'],
+    prints: ['color-atu', 'color-dashan', 'color-xiaoshui', 'draw-car', 'book-2', 'roots-w2', 'trace-w2', 'trace-num', 'count-2', 'cards-en-2'],
     // 家长：给家长的一页（写法见 app/ui/print.js 的 Pr.family）
     family: {
       talk: [
@@ -73,22 +73,39 @@
       { bg: 'mountain', t: '路通了！大山上山去，小风下山去。明天见！', hi: ['上', '下', '去'],
         sp: [{ k: 'dashan', x: 600, y: 232, s: 1.0, rot: -25, load: 5 }, { k: 'xiaofeng', x: 170, y: 405, s: 1.0, flip: true, anim: 'bob' }] }
     ],
+    // 问答：回忆经过，再加上心情和先后。pages 里的数是故事的第几页，从 0 数
     quiz: [
       { q: '大山要把什么运到山上去？', prop: ['drop', 'stone', 'flame'], ans: 'stone' },
       { q: '大山装了几块石头？', num: [3, 5, 8], ans: 5 },
+      { q: '大石头挡住了路，大山心里怎么样？', k: 'dashan', mood: ['happy', 'sad', 'wow'], ans: 'sad',
+        after: '对，他很着急，也有点难过。后来，朋友们都来帮忙了。' },
       { q: '谁第一个来帮忙？', who: ['xiaohuo', 'xiaofeng', 'atu'], ans: 'xiaofeng' },
-      { q: '最后是谁把大石头铲起来的？', who: ['atu', 'xiaoshui', 'xiaofeng'], ans: 'atu' }
+      { q: '最后是谁把大石头铲起来的？', who: ['atu', 'xiaoshui', 'xiaofeng'], ans: 'atu' },
+      { q: '哪件事先发生？', pages: [3, 7], ans: 3, after: '对！先是大石头滚下来，挡住了路；后来阿土才把它铲起来。' }
     ]
   });
   def('story-2', { cat: 'story', title: '大石头挡路了', icon: '📖', sub: '第 2 周故事', run: api => CE.Story.run(api, story) });
-  def('story-2-quiz', { cat: 'story', title: '故事问答：石头', icon: '❓', sub: '回忆故事的经过', run: api => CE.Story.quiz(api, story) });
+  def('story-2-quiz', { cat: 'story', title: '故事问答：石头', icon: '❓', sub: '回忆故事的经过，哪件事先发生，大山心里怎么样', run: api => CE.Story.quiz(api, story) });
 
   /* ---------- 屏幕：这一周新教的字和词。反复出现的练习在 content/library/ 里 ---------- */
-  def('learn-zh-w2', { cat: 'zh', title: '认字：石 上 下 来 去', icon: '字', sub: '第 2 周故事里的字', run: api => L.learnZh(api, ['石', '上', '下', '来', '去']) });
+  // 认字：上和下、来和去都是一对一对认的（见 content/library/language/zh-meaning.js 的 pair）。
+  // 句子里 [ ] 中的字空着让他补；page 是配故事的第几页（从 0 数）
+  const READ = [
+    { t: '大山要把[石]头运到山上去。', ask: '大山要把什么运到山上去？', opts: ['石', '土', '火'], page: 0 },
+    { t: '大山往山[上]开。', ask: '看图：大山往山上开，还是往山下开？', opts: ['上', '下'], page: 2, hint: '看看图，大山的车头朝上还是朝下？' },
+    { t: '一块大石头滚[下]来了！', ask: '看图：大石头是滚上来，还是滚下来？', opts: ['下', '上'], page: 3, hint: '石头是从山上往下滚的。' },
+    { t: '小火来了，小水也[来]了。', ask: '小火来了，小水也……？', opts: ['来', '去'], page: 6 },
+    { t: '大山上山去，小风下山[去]。', ask: '大山上山去，小风下山……？', opts: ['去', '来'], page: 9 }
+  ];
+  def('learn-zh-w2', { cat: 'zh', title: '认字：石 上 下 来 去', icon: '字', sub: '字是怎么来的；上下、来去一对一对认；读“上山”“下山”',
+    run: api => L.learnZh(api, ['石', '上', '下', '来', '去'], { words: ['上山', '下山'], read: READ, story: story }) });
   def('en-numbers', { cat: 'en', title: 'one to five', icon: 'ABC', sub: '数字 1–5 的英语', run: api => L.enLesson(api, ['one', 'two', 'three', 'four', 'five']) });
 
   /* ---------- 纸：这一周自己的打印材料。id 要写进上面的 prints，家长才能按周一次打印 ---------- */
   Pr.add('故事绘本', 'book-2', '绘本：大石头挡路了（6 页纸）', () => Pr.book(story, 2));
+  Pr.add('写字描红', 'roots-w2', '字是画出来的：石 上 下', () => Pr.roots('字是画出来的 · 第 2 周', story.chars,
+    '上和下是一对：一长横当地面，短的一横在上面是“上”，在下面是“下”。拿一本书当地面，把玩具车放在书上面、书下面，让他说是哪个字。' +
+    '来和去看不出来历，就在路上用：车朝我们开过来，是“来”；开走了，是“去”。'));
   Pr.add('写字描红', 'trace-w2', '描红：石 上 下 来 去', () => Pr.trace('描红 · 第 2 周的字', story.chars));
   Pr.add('数学练习', 'count-2', '比多少，接着写', () => Pr.compare([[3, 5], [6, 4], [2, 6], [5, 6]], [1, 2, 3, 0, 0, 6, 0, 8, 0, 10]));
   Pr.add('英语卡片', 'cards-en-2', '卡片：green one two three four five', () => Pr.cards(['green', 'one', 'two', 'three', 'four', 'five']));

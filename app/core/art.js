@@ -167,6 +167,14 @@
   };
   A.who = function (key, o, cls) { return A.v(A.CHARS[key].kind, o, cls); };
 
+  // 只看脸：问“他心里怎么样”时，把车头放大，表情才看得清。坐标是 vehicle() 里各种车画脸的位置。
+  // 不画轮子：卡车的嘴有一半压在前轮上，深色的嘴画在深色的轮子上就看不见了
+  const FACE = { car: [202, 94], firetruck: [205, 96], excavator: [112, 69], dumptruck: [205, 96], watertruck: [205, 96], bus: [210, 102], truck: [205, 96], train: [203, 94] };
+  A.face = function (key, mood, cls) {
+    const kind = A.CHARS[key] ? A.CHARS[key].kind : key, f = FACE[kind];
+    return `<svg class="veh face ${cls || ''}" viewBox="${f[0] - 34} ${f[1] - 27} 58 58" aria-hidden="true">${vehicle(kind, { mood: mood, noWheels: true })}</svg>`;
+  };
+
   /* ---------- 道具（原点在底边中点） ---------- */
   const PROP = {
     stone: () =>
@@ -205,6 +213,26 @@
         lamp(-268, '#ff5148', 'red') + lamp(-222, '#ffd23f', 'yellow') + lamp(-176, '#3ddc6e', 'green');
     },
     zebra: () => U.range(0, 5).map(i => `<rect x="${-66 + i * 24}" y="-78" width="13" height="78" fill="#fff"/>`).join(''),
+    // 风车：风一吹就转
+    pinwheel: () =>
+      `<path d="M0 0 V-58" stroke="#9a6a3a" stroke-width="6" stroke-linecap="round"/>` +
+      `<g transform="translate(0,-62)"><g class="an-whirl">` +
+        ['#ef5350', '#ffd23f', '#3b8beb', '#43b66b'].map((c, i) =>
+          `<path d="M0 0 L0 -32 Q20 -28 24 -8 Z" transform="rotate(${i * 90})" fill="${c}" ${SW}/>`).join('') +
+        `<circle r="5" fill="#fff" ${SW}/></g></g>`,
+    // 火山：山顶上冒着火
+    volcano: () =>
+      `<g transform="translate(0,-56) scale(.46)">${PROP.flame()}</g>` +
+      `<path d="M-64 0 L-17 -62 L17 -62 L64 0 Z" fill="#a1887f" ${SW}/>` +
+      `<path d="M-17 -62 Q-8 -52 0 -58 Q8 -50 17 -62" fill="#ff7a2f" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` +
+      `<path d="M-4 -56 Q-12 -36 -22 -26" fill="none" stroke="#ff7a2f" stroke-width="6" stroke-linecap="round"/>`,
+    // 车库：门关着，看不见里面，门上写着里面有几辆（sp.n）
+    garage: sp =>
+      `<path d="M-64 0 V-60 L0 -92 L64 -60 V0 Z" fill="#ffe08a" ${SW}/>` +
+      `<rect x="-46" y="-56" width="92" height="56" fill="#b8c2cc" ${SW}/>` +
+      [-46, -36, -26, -16, -6].map(y => `<path d="M-46 ${y}H46" stroke="${INK}" stroke-width="2" opacity=".45"/>`).join('') +
+      (sp.n != null ? `<circle cx="0" cy="-30" r="21" fill="#fff" ${SW}/>` +
+        `<text x="0" y="-20" text-anchor="middle" font-size="30" font-weight="800" fill="${INK}">${sp.n}</text>` : ''),
     bubble: sp =>
       `<ellipse cx="0" cy="-70" rx="78" ry="64" fill="#fff" ${SW}/><circle cx="-36" cy="6" r="11" fill="#fff" ${SW}/><circle cx="-50" cy="30" r="6" fill="#fff" ${SW}/>` +
       `<g transform="translate(0,-34)">${PROP[sp.icon || 'flame']()}</g>`,

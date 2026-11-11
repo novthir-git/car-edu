@@ -1,4 +1,6 @@
-/* 轮子实验室：圆、方、三角三种轮子都试一遍，再回答哪一种跑得最稳。 */
+/* 轮子实验室：先猜，再试，再说为什么。
+   先猜哪种轮子跑得最稳（没有对错），再把圆、方、三角三种轮子都试一遍，最后回答，并且讲出道理：
+   圆轮子转到哪里都一样高；方的、三角的转到角上，就把车顶起来。 */
 (function (CE) {
   'use strict';
   const U = CE.U, A = CE.Art;
@@ -37,7 +39,20 @@
     return R * Math.cos(Math.PI / n - phi);
   }
 
-  W.run = function (api) {
+  const NAME = { circle: '圆', square: '方', tri: '三角' };
+
+  W.run = async function (api) {
+    // 先猜一猜：点哪个都行，猜错了也没关系
+    const guess = await CE.Quiz.ask(api, {
+      any: true, say: '先猜一猜：方轮子、圆轮子、三角轮子，哪一种跑得最稳？猜错了也没关系。',
+      text: '先猜一猜：哪一种轮子跑得最稳？（没有对错）',
+      opts: ['square', 'circle', 'tri'].map(s => ({ k: s, html: W.icon(s) })), optCls: 'pic', after: '好，我们来试一试！'
+    });
+    if (guess === null || api.closed) return null;
+    return lab(api, guess);
+  };
+
+  function lab(api, guess) {
     return new Promise(resolve => {
       const tried = {};
       let raf = 0, running = false;
@@ -66,7 +81,7 @@
       };
       draw('circle', START, 0, 'happy');
 
-      const intro = () => CE.Speech.say('轮子为什么是圆的？点一点下面的轮子，看看小车怎么跑。');
+      const intro = () => CE.Speech.say('点一点下面的轮子，三种都试一试，看看小车怎么跑。');
       api.replay(intro);
       api.onClose = () => { cancelAnimationFrame(raf); resolve(null); };
 
@@ -79,9 +94,15 @@
 
       const question = async () => {
         const r = await CE.Quiz.ask(api, {
-          say: '哪一种轮子，跑得最稳？', text: '哪一种轮子跑得最稳？',
+          say: '试过了。哪一种轮子，跑得最稳？', text: '试过了：哪一种轮子跑得最稳？',
           opts: ['square', 'circle', 'tri'].map(s => ({ k: s, html: W.icon(s) })), ans: 'circle', optCls: 'pic',
-          item: 'sci:wheel', after: '对！圆圆的轮子最会滚。大石头也是圆的，所以会滚下山。'
+          item: 'sci:wheel', hint: '想一想，哪一种轮子跑的时候，小车一点也不颠？',
+          after: [
+            guess === 'circle' ? '对！你猜对了，试一试，果然是圆轮子。'
+              : `对！你刚才猜的是${NAME[guess]}轮子，试过以后，发现是圆轮子最稳。先猜，再试一试，就知道了。`,
+            '为什么呢？圆轮子不管转到哪里，都一样高，车就不颠。方轮子、三角轮子转到角上，就把车顶了起来，所以一颠一颠的。',
+            '大石头也是圆圆的，所以会滚下山。'
+          ]
         });
         if (r === null) return;
         resolve({ score: r ? 1 : 0, total: 1, stars: r ? 3 : 2 });
@@ -121,5 +142,5 @@
       tag();
       intro();
     });
-  };
+  }
 })(window.CE);

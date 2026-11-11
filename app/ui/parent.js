@@ -51,11 +51,18 @@
       const manual = it && (it.m === 1 || it.m === 0);
       return `<button class="zc lv-${lv} ${manual ? 'manual' : ''}" data-c="${z.c}" title="${z.p}　${z.w}　${LV[lv]}${manual ? '（手动）' : ''}">${z.c}</button>`;
     }).join('');
+    // 读词的时候不出声，他自己读对的词记在 ci: 下面
+    const words = Object.keys(S.data.items).filter(k => k.indexOf('ci:') === 0);
     return `<p>字库共 ${CE.ZH.length} 个字：<span class="tag lv-known">已掌握 ${n.known}</span> <span class="tag lv-maybe">对过一次 ${n.maybe}</span> ` +
       `<span class="tag lv-learning">还不会 ${n.learning}</span> <span class="tag lv-new">没测过 ${n.new}</span></p>` +
       `<div class="zgrid">${cells}</div>` +
+      (words.length ? `<h3>自己读出来的词</h3><div class="chips">${words.map(k =>
+        `<span class="tag lv-${S.level(k)}">${U.esc(k.slice(3))}　${LV[S.level(k)]}</span>`).join('')}</div>` : '') +
       `<p class="muted">点一个字可以手动标记：已掌握 → 还不会 → 交回系统判断。您清楚他认识哪些字的话，直接在这里标一遍最快；` +
-      `“认字”活动只教没掌握的字。四选一有蒙对的可能，所以要连续两次第一下就点对才算“已掌握”。</p>`;
+      `“认字”活动只教没掌握的字。四选一有蒙对的可能，所以要连续两次第一下就点对才算“已掌握”。</p>` +
+      `<p class="muted">“认字”不是看卡片记字形：先讲字是怎么来的（山就是照着山画的），再看图找字、用学过的字读词、补故事里的句子。` +
+      `读词的时候屏幕不读出声，要他自己读，读对了记在上面“自己读出来的词”里。路上、书上的字他认不认得，屏幕记不到，想到了请记在观察笔记里。` +
+      `“找字小侦探”是听音找字，只用来摸底。</p>`;
   }
 
   function math() {
@@ -81,7 +88,10 @@
       `<p class="muted">当前难度：数车车 ${lv('count-cars', 3)}，找数字 ${lv('find-num', 3)}，停车场 ${lv('give-n', 3)}，` +
       `数字公路 ${lv('num-road', 3)}，谁多谁少 ${lv('compare', 2)}，又来了几辆 ${lv('add-intro', 2)}。` +
       `一次活动答对八成以上自动升一级，不到四成降一级。</p>` +
-      `<p class="muted">“按数取物”检查的是他是否理解数量：能背着数到 49，不一定能准确拿出 7 个。</p>`;
+      `<p class="muted">“按数取物”检查的是他是否理解数量：能背着数到 49，不一定能准确拿出 7 个。</p>` +
+      `<p class="muted">“谁多谁少”里，有一半的题故意让少的那一排排得更长，只看长短会选错。这个年纪常常看长短，答错是正常的，不用纠正；` +
+      `答对以后，屏幕会把两排一辆对一辆排齐，让他看到多出来的几辆。“找数字”的图上，一个停车场停满是 10 辆：23 就是停满两个、再停 3 辆。` +
+      `“又来了几辆”到第二级，车库门关着，看不见里面的车，要从门上的数接着往下数。数车车、谁多谁少、又来了几辆里的车，都可以点一下数一个。</p>`;
   }
 
   function en() {

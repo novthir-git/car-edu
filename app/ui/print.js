@@ -76,6 +76,22 @@
     return page(1, 5) + page(6, 10);
   };
 
+  /* 字是画出来的：每个字一行，实物的画 → 古时候的字 → 今天的字 → 他自己照着画；最后一格自己造一个字。
+     只放有来历的字（content/library/language/zh-meaning.js 的 root），一页最多 7 个。note 是写给家长的一句 */
+  Pr.roots = function (title, chars, note) {
+    const ar = '<span class="rt-ar">→</span>';
+    const rows = chars.filter(c => CE.ZHM[c] && CE.ZHM[c].root).map(c => {
+      const r = CE.ZHM[c].root;
+      return `<div class="rt-row"><div class="rt-cell">${CE.zhBox(r.pic)}</div>${ar}` +
+        `<div class="rt-cell old">${r.oldText ? `<span class="rt-old-t">${r.oldText}</span>` : CE.zhBox(r.old)}</div>${ar}` +
+        `${tz(c, 'rt-now')}${ar}<div class="rt-cell mine"></div></div>`;
+    }).join('');
+    return sheet(`<div class="rt-sheet">` +
+      head(title, '看左边的画，猜一猜是什么字。最后一格，你也照着画一画。') + rows +
+      `<div class="rt-make"><b>你也来造一个字</b><span>画一样你喜欢的东西，再把它画得越来越简单，变成一个字。讲给爸爸妈妈听：它是什么字？</span>` +
+      `<div class="rt-make-box"></div></div>` + (note ? `<p class="rt-note">给家长：${note}</p>` : '') + `</div>`);
+  };
+
   // 数一数。rows 每行是 [几辆, 哪种车]，一页最多 6 行
   Pr.count = function (rows) {
     return sheet(head('数一数，写数字', '每一行有几辆车？数一数，把数字写在方框里。') +
