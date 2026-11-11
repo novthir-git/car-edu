@@ -5,7 +5,10 @@
      pages 每页一两句话，配一幅场景：
        bg 背景；sp 画面里的角色和道具（x,y 是底边中点，画布 800x450）；
        t 正文；hi 本页要突出的字（可点读）。
-     quiz 回忆题：q 问题，ans 答案，选项是 who（角色）、prop（道具）、num（数字）三种之一。 */
+     quiz 故事问答：q 问题，ans 答案，after 答对以后说的话（可选）。选项是下面几种之一：
+       who（角色）、prop（道具）、num（数字）：回忆谁、什么、几个
+       mood（表情，k 是哪个角色）：他心里怎么样。答案是这一页里他的表情
+       pages（故事的第几页，从 0 数）：哪件事先发生。只问“谁、什么”是死记，问心情和先后才要想 */
 (function (CE) {
   'use strict';
   const U = CE.U, A = CE.Art;
@@ -19,8 +22,10 @@
         let opts;
         if (q.who) opts = q.who.map(k => ({ k: k, html: A.who(k) + `<span class="cap">${A.CHARS[k].name}</span>` }));
         else if (q.prop) opts = q.prop.map(k => ({ k: k, html: A.prop(k) }));
+        else if (q.mood) opts = q.mood.map(m => ({ k: m, html: A.face(q.k, m) }));
+        else if (q.pages) opts = q.pages.map(n => ({ k: String(n), html: A.scene(story.pages[n].bg, story.pages[n].sp) }));
         else opts = q.num.map(n => ({ k: String(n), html: `<span class="num">${n}</span>` }));
-        return { say: q.q, text: q.q, opts: opts, ans: String(q.ans), optCls: q.num ? 'txt' : 'pic' };
+        return { say: q.q, text: q.q, opts: opts, ans: String(q.ans), optCls: q.num ? 'txt' : 'pic', after: q.after };
       }
     });
   };

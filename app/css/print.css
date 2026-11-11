@@ -43,6 +43,21 @@
 .tz::after { top: 50%; left: 0; right: 0; border-top: .2mm dashed #999; }
 .tz.ghost { color: #cfcfcf; }
 
+/* 字是画出来的：画 → 古时候的字 → 今天的字 → 自己画。最后一块“自己造一个字”占满剩下的地方 */
+.rt-sheet { height: 100%; display: flex; flex-direction: column; }
+.rt-row { display: flex; align-items: center; gap: 2mm; padding: 1.5mm 0; border-bottom: .3mm dashed #bbb; flex: none; }
+.rt-cell { width: 22mm; height: 22mm; border: .4mm solid #444; border-radius: 3mm; display: grid; place-items: center; flex: none; }
+.rt-cell .zh-svg { width: 19mm; height: 19mm; display: block; }
+.rt-cell.old { background: #fbf6ea; }
+.rt-cell.mine { flex: 1; }
+.rt-old-t { font-family: var(--kai); font-size: 16mm; line-height: 1; }
+.rt-ar { font-size: 6mm; color: #888; flex: none; }
+.tz.rt-now { width: 22mm; height: 22mm; margin-right: 0; font-size: 17mm; line-height: 21mm; }
+.rt-make { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 1mm; margin-top: 4mm; font-size: 4.4mm; }
+.rt-make b { font-family: var(--kai); font-size: 7mm; font-weight: 400; }
+.rt-make-box { flex: 1; min-height: 22mm; border: .4mm solid #444; border-radius: 3mm; margin-top: 1mm; }
+.rt-note { flex: none; margin: 3mm 0 0; font-size: 4mm; line-height: 1.45; color: #333; }
+
 /* 控笔 */
 .pen-row { display: flex; align-items: center; gap: 2mm; height: 40mm; border-bottom: .3mm dashed #bbb; }
 .pen-row .veh { width: 20mm; height: auto; flex: none; }
