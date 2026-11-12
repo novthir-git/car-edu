@@ -97,7 +97,8 @@ jobs:
         working-directory: android
         env:
           CE_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-        run: ./gradlew --no-daemon assembleRelease webUpdate
+        # 内容版本用打包的时间：同一个提交重新打包（比如补生成了朗读音频），平板也会收到
+        run: CE_CONTENT_V=$(date +%s) ./gradlew --no-daemon assembleRelease webUpdate
       - name: 发布
         env:
           GH_TOKEN: ${{ github.token }}
