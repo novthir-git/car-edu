@@ -1,13 +1,17 @@
-# 安卓应用：每次推送都跑测试、编译 APK；合并到 main 时，打包签名好的 APK 和热更新包，发布到 GitHub Releases。
-# 平板上的应用从“最新发布”里下载热更新包（见 android/README.md）。
+# 安卓应用：每次推送都跑测试、编译 APK；合并到 main 时，生成朗读音频，打包签名好的 APK 和热更新包，发布到 GitHub Releases。
+# 平板上的应用从“最新发布”里下载热更新包（见 android/README.md）。朗读音频见 tools/voice/。
 name: 安卓应用
 
 on:
   push:
-    paths: ['index.html', 'app/**', 'content/**', 'android/**', 'tests/**', '.github/workflows/android.yml']
+    paths: ['index.html', 'app/**', 'content/**', 'voice/**', 'tools/**', 'android/**', 'tests/**', '.github/workflows/android.yml']
   pull_request:
-    paths: ['index.html', 'app/**', 'content/**', 'android/**', 'tests/**', '.github/workflows/android.yml']
+    paths: ['index.html', 'app/**', 'content/**', 'voice/**', 'tools/**', 'android/**', 'tests/**', '.github/workflows/android.yml']
   workflow_dispatch:
+    inputs:
+      voice_max_chars:
+        description: 这一次最多生成多少字的朗读音频（火山引擎按字计费；平时每次 3000）
+        default: '3000'
 
 permissions:
   contents: read
@@ -27,6 +31,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: 冒烟测试
         run: node tests/smoke.js
+      - name: 收集朗读句子的脚本没坏（只玩一遍，不生成音频）
+        run: node tools/voice/collect.js voice-lines.json --quick
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
@@ -48,6 +54,29 @@ jobs:
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: 安装 Playwright
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: 收集要朗读的句子
+        run: |
+          command -v ffmpeg || (sudo apt-get update -q && sudo apt-get install -y -q ffmpeg)
+          node tools/voice/collect.js voice-lines.json
+      - name: 取回上一次发布的朗读音频
+        run: |
+          mkdir -p voice-cache
+          if curl -fsSL -o prev.zip "https://github.com/$GITHUB_REPOSITORY/releases/latest/download/www.zip"; then
+            unzip -q -o prev.zip 'voice/*' -d voice-cache || true
+          fi
+          ls voice-cache/voice 2>/dev/null | wc -l
+      - name: 生成新句子的朗读音频
+        env:
+          VOLC_TTS_API_KEY: ${{ secrets.VOLC_TTS_API_KEY }}
+          VOICE_MAX_CHARS: ${{ inputs.voice_max_chars || '3000' }}
+        run: node tools/voice/build.js voice-lines.json voice-cache/voice voice
       - uses: actions/setup-java@v6
         with:
           distribution: temurin

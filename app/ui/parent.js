@@ -120,7 +120,7 @@
       : !sp.zh ? engine + '没有找到中文语音。可以点下面的“试听”确认；如果没有声音，需要您读给孩子听，或换一台设备/浏览器。'
         : engine + `中文语音：${U.esc(sp.zh.name)}；英文语音：${sp.en ? U.esc(sp.en.name) : '没有找到'}`;
     return `<div class="form">` +
-      `<label>孩子的名字（问好时会叫他）<input type="text" data-k="name" value="${U.esc(st.name)}" maxlength="12"></label>` +
+      `<label>孩子的名字（显示在主页上，不读出来）<input type="text" data-k="name" value="${U.esc(st.name)}" maxlength="12"></label>` +
       `<label>每天使用上限（分钟，0 表示不限）<input type="number" data-k="minutes" min="0" max="120" value="${Number(st.minutes) || 0}"></label>` +
       `<label>语速 <input type="range" data-k="rate" min="0.6" max="1.2" step="0.05" value="${st.rate}"> <output>${st.rate}</output></label>` +
       `<label class="chk"><input type="checkbox" data-k="sfx" ${st.sfx ? 'checked' : ''}> 音效</label>` +

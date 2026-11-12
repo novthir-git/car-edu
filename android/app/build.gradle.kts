@@ -13,9 +13,9 @@ plugins {
    打出来的更新包只给这个版本以上的外壳用：旧外壳的家长页会提示先装新的 APK。 */
 val shell = 1
 
-// 网页就是仓库根目录的 index.html、app/、content/。打包时复制进 APK，不在 android/ 里另存一份
+// 网页就是仓库根目录的 index.html、app/、content/，加上预生成的朗读音频 voice/。打包时复制进 APK，不在 android/ 里另存一份
 val web: File = rootDir.parentFile
-val webFiles = listOf("index.html", "app/**", "content/**")
+val webFiles = listOf("index.html", "app/**", "content/**", "voice/**")
 
 // 内容的版本：最后一次提交的时间（秒）和短哈希。更新时只换成比现在新的
 val stamp = providers.exec {

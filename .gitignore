@@ -10,3 +10,8 @@ android/local.properties
 *.keystore
 *.jks
 *.p12
+
+# 朗读音频由 GitHub Actions 生成（tools/voice/），不进仓库；仓库里只有空的 voice/lines.js
+voice/*.mp3
+voice-lines.json
+voice-cache/

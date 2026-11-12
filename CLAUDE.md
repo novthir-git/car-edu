@@ -32,6 +32,7 @@ python3 -m http.server 8000          # 本地运行，然后打开 http://localh
 node tests/smoke.js                  # 冒烟测试（需要 playwright），约 45 秒
 node --check content/k2/w01.js       # 单个文件的语法检查
 cd android && ./gradlew testDebugUnitTest assembleDebug   # 安卓外壳：单元测试和调试版 APK（需要 JDK 17+、Android SDK）
+node tools/voice/collect.js voice-lines.json --quick       # 收集朗读的句子（快速检查；去掉 --quick 是完整收集，几分钟）
 ```
 
 网页没有构建步骤；`android/` 的 Gradle 只管安卓外壳，打包时把网页原样复制进 APK。
@@ -63,6 +64,8 @@ docs/systems.md       依据什么：业界体系和学习科学的对照，备�
 docs/growth-log.md    他现在怎么样：成长记录，跨年级，按时间追加
 docs/<年级>/plan.md   这一年教什么：这个年级的大纲
 tests/smoke.js        冒烟测试
+voice/lines.js        预生成朗读音频的对照表。仓库里是空的，发布时生成（见下面“语音”）
+tools/voice/          收集要朗读的句子（collect.js）、用火山引擎生成音频（build.js），只在 GitHub Actions 发布时跑
 android/              安卓应用的外壳（见下面“安卓应用”和 android/README.md）
 .github/workflows/    每次推送跑测试；合并到 main 时发布签名的 APK 和热更新包到 GitHub Releases
 ```
@@ -152,7 +155,12 @@ library 里，字库和词库（`zh-chars.js`、`en-words.js`）要排在用它�
 
 ### 语音
 
-`app/core/speech.js` 用浏览器自带的语音合成（安卓应用里换成系统的朗读，见下面“安卓应用”），音效用 WebAudio 现场合成，仓库里没有音频文件。`Speech.say()` 接受字符串或分段数组（`{t, lang: 'en'}` 切换英文），返回 Promise。每段都有估算时长的兜底定时器，因为有些设备不触发 `onend`——流程不能依赖语音事件。浏览器要求先有一次点击才能出声，开场的 `Splash` 就是为此存在。
+`app/core/speech.js` 读每一句之前先查 `CE.VOICE`（`voice/lines.js`，键是“语种|文字”）：有预生成的音频就放音频，没有或放不出来就用浏览器自带的语音合成（安卓应用里换成系统的朗读，见下面“安卓应用”）。音效用 WebAudio 现场合成。
+
+- **预生成的音频不进仓库**。合并到 main 时，GitHub Actions 用 `tools/voice/collect.js` 把每个活动反复玩、收集孩子会听到的句子，再用 `tools/voice/build.js` 调火山引擎生成音频（声音“儿童绘本 2.0”，中英文同一个），放进 APK 和热更新包。Key 在 GitHub Secrets 的 `VOLC_TTS_API_KEY`，按字计费：只给新句子生成，每次最多 3000 字（手动运行时可以调大），超出的先用系统朗读，下次接着补。
+- 所以**改一句话的写法 = 那一句要重新生成**（花几个字的钱），不用避免，但别为了改而改。读出来的话里不要放家长填的东西（比如孩子的名字），那些没法提前生成，会和别的句子不是一个声音。
+- 本地生成的 `voice/*.mp3` 和改过的 `voice/lines.js` 不要提交。
+`Speech.say()` 接受字符串或分段数组（`{t, lang: 'en'}` 切换英文），返回 Promise。每段都有估算时长的兜底定时器，因为有些设备不触发 `onend`——流程不能依赖语音事件。浏览器要求先有一次点击才能出声，开场的 `Splash` 就是为此存在。
 
 ### 画面
 
