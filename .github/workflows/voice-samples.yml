@@ -1,0 +1,68 @@
+# 临时：用火山引擎生成几段样音，给家长挑声音。挑定以后删掉这个文件，不合并进 main。
+name: 样音（临时）
+
+on:
+  push:
+    branches: ['claude/jolly-wozniak-2zixfe']
+    paths: ['.github/workflows/voice-samples.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  samples:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 生成样音
+        env:
+          VOLC_TTS_API_KEY: ${{ secrets.VOLC_TTS_API_KEY }}
+        run: |
+          mkdir -p samples
+          cat > tts.py <<'PY'
+          import json, os, sys, uuid, base64, urllib.request, urllib.error
+          key = os.environ.get("VOLC_TTS_API_KEY", "")
+          if not key:
+              sys.exit("没有 VOLC_TTS_API_KEY")
+          def tts(text, speaker, out):
+              body = {"user": {"uid": "car-edu"}, "req_params": {"text": text, "speaker": speaker,
+                      "audio_params": {"format": "mp3", "sample_rate": 24000}}}
+              req = urllib.request.Request("https://openspeech.bytedance.com/api/v3/tts/unidirectional",
+                  data=json.dumps(body).encode(), headers={"X-Api-Key": key, "X-Api-Resource-Id": "seed-tts-2.0",
+                  "X-Api-Request-Id": str(uuid.uuid4()), "X-Control-Require-Usage-Tokens-Return": "*",
+                  "Content-Type": "application/json"})
+              audio, usage = b"", None
+              try:
+                  with urllib.request.urlopen(req, timeout=60) as r:
+                      for line in r:
+                          line = line.strip()
+                          if not line:
+                              continue
+                          o = json.loads(line)
+                          if o.get("data"):
+                              audio += base64.b64decode(o["data"])
+                          if o.get("usage"):
+                              usage = o["usage"]
+                          if o.get("code") not in (0, 20000000):
+                              sys.exit(f"{speaker}: {o.get('code')} {o.get('message')}")
+              except urllib.error.HTTPError as e:
+                  sys.exit(f"{speaker}: HTTP {e.code} {e.read().decode(errors='replace')[:300]}")
+              open(out, "wb").write(audio)
+              print(f"{out}: {len(audio)} 字节，计费 {usage}")
+          zh = "今天，小汽车小风来到了车车镇。“你好！我叫小风。我跑得像风一样快！”请让两辆车开进停车场。数好了，就点“停好了”。太棒了！三颗星星！我们学英语：a red car，a blue bus，a yellow truck。"
+          en = "Hello! A red car. A blue bus. A yellow truck. One, two, three, four, five!"
+          for name, sp, text in [
+              ("1-儿童绘本", "zh_female_xiaoxue_uranus_bigtts", zh),
+              ("2-温柔妈妈", "zh_female_wenroumama_uranus_bigtts", zh),
+              ("3-Vivi", "zh_female_vv_uranus_bigtts", zh),
+              ("4-小何", "zh_female_xiaohe_uranus_bigtts", zh),
+              ("5-英语-Dacey", "en_female_dacey_uranus_bigtts", en),
+              ("6-英语-Stokie", "en_female_stokie_uranus_bigtts", en),
+          ]:
+              tts(text, sp, f"samples/{name}.mp3")
+          PY
+          python3 tts.py
+      - uses: actions/upload-artifact@v7
+        with:
+          name: voice-samples
+          path: samples/
+          retention-days: 7
