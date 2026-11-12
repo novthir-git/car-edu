@@ -94,7 +94,7 @@
   /* ================= 主页 ================= */
   CE.Home = {
     show(app) {
-      const cur = P.current();
+      const cur = P.current(), name = S.data.settings.name;
       const stops = CE.WEEKS.map(w =>
         `<div class="map-week"><div class="map-label">第 ${w.n} 周　${U.esc(w.title)}</div><div class="map-row">` +
         w.days.map((acts, i) => {
@@ -105,7 +105,8 @@
         }).join('') + `</div></div>`).join('');
       app.innerHTML =
         `<div class="screen home">` +
-          `<header class="topbar"><div class="brand">车车镇</div>` +
+          // 名字只显示，不读出来（朗读用的是预先生成的音频，家长填的名字没法提前生成）
+          `<header class="topbar"><div class="brand">车车镇${name ? `<small class="brand-hi">${U.esc(name)}，你好！</small>` : ''}</div>` +
             `<div class="pill">${A.starIcon(true)}<b>${S.stars()}</b></div>` +
             `<button class="parent-btn">家长</button></header>` +
           `<div class="home-stage">${A.scene('town', [
