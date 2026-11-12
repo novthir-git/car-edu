@@ -1,9 +1,12 @@
-/* 语音朗读（浏览器自带的语音合成）和音效（WebAudio 现场合成，不需要音频文件）。
+/* 语音朗读和音效（WebAudio 现场合成）。
+   朗读先找预先生成好的音频（voice/lines.js，GitHub Actions 用火山引擎生成，声音自然）；
+   没有的句子用浏览器自带的语音合成（安卓应用里是系统的朗读）。
    孩子还不识字，所有提示都靠这里读出来。没有中文语音的设备上，屏幕会显示文字，请家长代读。 */
 (function (CE) {
   'use strict';
   const keep = [];   // 保留引用，避免部分浏览器提前回收导致 onend 不触发
   let token = 0;
+  let audio = null;  // 正在放的预生成音频
 
   /* 朗读引擎：浏览器自带的语音合成。在安卓应用里换成系统的朗读（CE.Native.tts），
      因为 WebView 不支持浏览器的语音合成。两套的用法一样：voices() 列出声音，speak() 读一句，读完调 done。 */
@@ -88,8 +91,27 @@
 
   S.stop = function () {
     token++;
+    if (audio) { try { audio.pause(); } catch (e) { /* 忽略 */ } audio = null; }
     if (S.supported) { try { E.cancel(); } catch (e) { /* 忽略 */ } }
   };
+
+  /* 预生成的音频：键是“语种|文字”，值是 voice/ 下的文件名。生成时的语速对应设置里的 0.9，
+     设置改快改慢就按比例调播放速度。放不出来（文件缺了、设备不支持）时调 fail，改用语音合成。 */
+  S.file = (en, t) => (CE.VOICE || {})[(en ? 'en' : 'zh') + '|' + t];
+  function play(file, rate, done, fail, arm) {
+    const a = audio = new Audio('voice/' + file + '.mp3');
+    let failed = false;
+    const bad = () => { if (failed || audio !== a) return; failed = true; audio = null; fail(); };
+    a.playbackRate = Math.min(2, Math.max(0.5, rate / 0.9));
+    a.onended = () => { if (audio === a) audio = null; done(); };
+    a.onerror = bad;
+    // 知道了音频多长，就按实际长度重新设兜底定时器
+    a.onloadedmetadata = () => { if (isFinite(a.duration)) arm(a.duration * 1000 / a.playbackRate + 1200); };
+    try {
+      const pr = a.play();
+      if (pr && pr.catch) pr.catch(bad);
+    } catch (e) { bad(); }
+  }
 
   // 单独的“2”后面跟量词时要读“两”：2辆 → 两辆（12辆、20辆不变）。语音引擎会读成“二辆”
   S.spoken = t => String(t).replace(/(^|[^\d])2(?=[辆块个颗只本张])/g, '$1两');
@@ -100,7 +122,7 @@
       .map(p => (p.lang === 'en' ? p : Object.assign({}, p, { t: S.spoken(p.t) })));
     S.stop();
     const my = token;
-    if (CE.TEST || !S.supported || !parts.length) return Promise.resolve(false);
+    if (CE.TEST || !(S.supported || CE.VOICE) || !parts.length) return Promise.resolve(false);
     const rate = Number(CE.Store.data.settings.rate) || 0.9;
     return new Promise(resolve => {
       let i = 0;
@@ -109,16 +131,23 @@
         if (i >= parts.length) return resolve(true);
         const p = parts[i++];
         const en = p.lang === 'en';
-        let done = false;
-        // 有些设备不会触发 onend，用估算时长兜底，保证流程不会卡住
-        const guess = 900 + p.t.length * (en ? 110 : 380) / rate;
+        let done = false, tm = null;
         const fin = () => {
           if (done) return;
           done = true; clearTimeout(tm);
           setTimeout(next, p.gap || 150);
         };
-        const tm = setTimeout(fin, guess);
-        try { E.speak(p.t, en ? 'en-US' : 'zh-CN', en ? S.en : S.zh, en ? rate * 0.9 : rate, fin); } catch (e) { fin(); }
+        // 有些设备不会触发 onend，用估算时长兜底，保证流程不会卡住
+        const arm = ms => { clearTimeout(tm); tm = setTimeout(fin, ms); };
+        arm(900 + p.t.length * (en ? 110 : 380) / rate);
+        const synth = () => {
+          if (done || my !== token) return;
+          if (!S.supported) return fin();
+          try { E.speak(p.t, en ? 'en-US' : 'zh-CN', en ? S.en : S.zh, en ? rate * 0.9 : rate, fin); } catch (e) { fin(); }
+        };
+        const file = S.file(en, p.t);
+        if (file) play(file, rate, fin, synth, arm);
+        else synth();
       };
       setTimeout(next, 70);   // cancel 之后立刻 speak 在部分浏览器会丢失
     });

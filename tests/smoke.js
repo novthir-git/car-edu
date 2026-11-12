@@ -80,6 +80,15 @@ async function androidShell(browser, base, fail) {
       stop: rec('stop'), print: rec('print'), saveText: rec('saveText'), setSources: rec('setSources'),
       checkUpdate: rec('checkUpdate'), applyUpdate: rec('applyUpdate'), openTtsSettings: rec('openTtsSettings')
     };
+    // 假的音频播放器：记下放了哪个文件；文件名里带 broken 的当作放不出来
+    window.Audio = function (src) {
+      calls.push(['audio', src]);
+      this.play = () => {
+        setTimeout(() => (/broken/.test(src) ? this.onerror && this.onerror() : this.onended && this.onended()), 5);
+        return Promise.resolve();
+      };
+      this.pause = () => {};
+    };
   });
   const p = await ctx.newPage();
   p.on('pageerror', e => fail('安卓 pageerror: ' + e.message));
@@ -96,6 +105,17 @@ async function androidShell(browser, base, fail) {
   if (!spoke.ok || spoke.zh !== 'cmn-cn-x-c' || spoke.en !== 'en-us-x-d' ||
       said.join(' | ') !== '有两辆车 zh-CN cmn-cn-x-c | car en-US en-us-x-d') {
     fail('安卓：朗读没有正确交给外壳：' + JSON.stringify({ spoke, said }));
+  }
+
+  // 预生成的音频（voice/lines.js）：有音频的句子放音频；没有的、放不出来的，改用外壳的朗读
+  const voiced = await p.evaluate(async () => {
+    CE.VOICE = { 'zh|有两辆车': 'aaa', 'en|car': 'broken' };
+    window.__calls.length = 0;
+    const ok = await CE.Speech.say(['有2辆车', { t: 'car', lang: 'en' }, '这句没有音频']);
+    return { ok, order: window.__calls.filter(c => c[0] === 'audio' || c[0] === 'speak').map(c => c[0] + ' ' + c[1]) };
+  });
+  if (!voiced.ok || voiced.order.join(' | ') !== 'audio voice/aaa.mp3 | audio voice/broken.mp3 | speak car | speak 这句没有音频') {
+    fail('朗读没有先用预生成的音频、再退回系统朗读：' + JSON.stringify(voiced));
   }
 
   // 家长页的“应用”一节，和交给外壳的几件事

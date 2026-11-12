@@ -125,9 +125,10 @@
       U.$$('.stop', app).forEach(b => b.addEventListener('click', () => { CE.Sfx.tap(); U.go('#/day/' + b.dataset.d); }));
       if (CE.unlocked) CE.Home.greet();
     },
+    // 名字只显示在屏幕上，不读出来：朗读用的是预先生成的音频（voice/），家长填的名字没法提前生成
     greet() {
-      const name = S.data.settings.name, cur = P.current();
-      CE.Speech.say((name ? name + '，你好！' : '你好！') +
+      const cur = P.current();
+      CE.Speech.say('你好！' +
         (cur ? '点钥匙，跟小风出发。点游戏机，想玩什么都可以。' : '每一站都去过啦！点游戏机，想玩什么都可以。'));
     }
   };

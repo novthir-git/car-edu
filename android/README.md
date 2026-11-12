@@ -86,7 +86,7 @@ base64 -w0 car-edu-release.keystore
 | --- | --- |
 | `version.json` | 内容版本 `v`（最后一次提交的时间）、提交 `sha`、需要的外壳版本 `shell`、`www.zip` 的大小和 sha256 |
 | `version.sig` | `version.json` 的签名 |
-| `www.zip` | 网页 |
+| `www.zip` | 网页，加上预生成的朗读音频 `voice/`（发布时由 `tools/voice/` 生成，全部生成后十几 MB） |
 
 应用这样处理：
 
