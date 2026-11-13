@@ -17,13 +17,16 @@ val shell = 1
 val web: File = rootDir.parentFile
 val webFiles = listOf("index.html", "app/**", "content/**", "voice/**")
 
-// 内容的版本：最后一次提交的时间（秒）和短哈希。更新时只换成比现在新的
+// 内容的版本：打包的时间（秒）和最后一次提交的短哈希。应用只换成比现在新的。
+// 发布时 GitHub Actions 用 CE_CONTENT_V 传入打包的时间：同一个提交重新打包（比如补生成了朗读音频）也算新版本。
+// 本机打包没有这个变量，就用最后一次提交的时间
 val stamp = providers.exec {
     commandLine("git", "-C", web.path, "log", "-1", "--format=%ct %h")
     isIgnoreExitValue = true
 }.standardOutput.asText.get().trim().split(" ")
-val contentV = stamp.getOrNull(0)?.toLongOrNull() ?: 0L
-val contentSha = stamp.getOrNull(1)?.takeIf { contentV > 0 } ?: "local"
+val commitV = stamp.getOrNull(0)?.toLongOrNull() ?: 0L
+val contentV = providers.environmentVariable("CE_CONTENT_V").orNull?.toLongOrNull() ?: commitV
+val contentSha = stamp.getOrNull(1)?.takeIf { commitV > 0 } ?: "local"
 val contentJson = """{"v":$contentV,"sha":"$contentSha","shell":$shell}"""
 
 // 默认的更新地址：在 GitHub Actions 里打包时，是这个仓库最新发布的文件。家长还可以在家长页加自己的地址（NAS）
