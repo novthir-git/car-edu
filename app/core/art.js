@@ -233,6 +233,21 @@
       [-46, -36, -26, -16, -6].map(y => `<path d="M-46 ${y}H46" stroke="${INK}" stroke-width="2" opacity=".45"/>`).join('') +
       (sp.n != null ? `<circle cx="0" cy="-30" r="21" fill="#fff" ${SW}/>` +
         `<text x="0" y="-20" text-anchor="middle" font-size="30" font-weight="800" fill="${INK}">${sp.n}</text>` : ''),
+    // 纸箱：sp.wheels 时下面装一块带两个轮子的板
+    box: sp => {
+      const box = y => `<g transform="translate(0,${y})"><rect x="-46" y="-70" width="92" height="70" rx="4" fill="#d9a066" ${SW}/>` +
+        `<path d="M-46 -52H46M0 -70V-52" stroke="${INK}" stroke-width="2.5" opacity=".5"/></g>`;
+      if (!sp.wheels) return box(0);
+      return [-30, 30].map(x => `<circle cx="${x}" cy="-10" r="10" fill="#3a3a4a" ${SW}/>`).join('') +
+        `<rect x="-54" y="-26" width="108" height="9" rx="3" fill="#7a7f8c" ${SW}/>` + box(-24);
+    },
+    // 加油机：油管从右边垂下来
+    pump: () =>
+      `<path d="M26 -66 Q54 -66 54 -34 V-26" fill="none" stroke="${INK}" stroke-width="6" stroke-linecap="round"/>` +
+      `<rect x="-28" y="-96" width="56" height="96" rx="8" fill="#43b66b" ${SW}/>` +
+      `<rect x="-18" y="-86" width="36" height="22" rx="4" fill="#d9f1ff" ${SW}/>` +
+      `<path d="M-10 -30 C-10 -42 -2 -48 0 -56 C2 -48 10 -42 10 -30 A10 10 0 0 1 -10 -30 Z" fill="#ffd23f" ${SW}/>` +
+      `<rect x="46" y="-30" width="16" height="22" rx="4" fill="#3a3a4a" ${SW}/>`,
     bubble: sp =>
       `<ellipse cx="0" cy="-70" rx="78" ry="64" fill="#fff" ${SW}/><circle cx="-36" cy="6" r="11" fill="#fff" ${SW}/><circle cx="-50" cy="30" r="6" fill="#fff" ${SW}/>` +
       `<g transform="translate(0,-34)">${PROP[sp.icon || 'flame']()}</g>`,

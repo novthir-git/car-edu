@@ -16,6 +16,8 @@
       ['find-num', 'learn-zh-w1b', 'en-colors'],
       ['find-zh', 'count-cars', 'color-xiaohuo']
     ],
+    // 只在“自由玩”里出现的活动
+    extra: ['why'],
     // 纸：这一周要打印的。给家长的那一页会自动排在最前面，不用写在这里
     prints: ['color-xiaofeng', 'color-xiaohuo', 'color-train', 'pen-roads', 'book-1', 'roots-w1', 'trace-w1', 'count-1', 'cards-en-1'],
     // 家长：给家长的一页（写法见 app/ui/print.js 的 Pr.family）

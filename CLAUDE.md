@@ -53,7 +53,7 @@ README.md             给人看的总览：怎么打开、去哪里看什么
 app/                  程序。加内容不应该需要改这里
   core/               底层：util 工具，store 学习记录，speech 语音，art 画图，course 登记处
   engines/            玩法，一个文件一种，文件名对应 CE 上的名字：
-                      quiz、cards、story、give-n（CE.GiveN）、traffic、coloring、wheel
+                      quiz、cards、story、give-n（CE.GiveN）、traffic、coloring、wheel、why
   ui/                 页面：screens 孩子的页面，parent 家长页，print 打印
   css/
 content/library/      各年级共用的字库、词库和反复出现的练习，按能力的五个方面分目录（见下）
@@ -112,7 +112,7 @@ library 里，字库和词库（`zh-chars.js`、`en-words.js`）要排在用它�
 | 目录 | 方面 | 活动类别（`cat`） | 现在有 |
 | --- | --- | --- | --- |
 | `language/` | 说得出 | `zh`、`en`（故事 `story` 在各周文件里） | 字库、字的意思和来历、用学过的字组的词、找字、认字；词库、单词课、短语 |
-| `thinking/` | 想得清 | `math`、`logic`、`sci` | 数学六项；找规律；轮子实验室 |
+| `thinking/` | 想得清 | `math`、`logic`、`sci` | 数学六项；找规律；轮子实验室；问为什么 |
 | `hands/` | 手上稳 | `art` | 涂色；控笔和写数字的纸 |
 | `social/` | 处得来 | `safety` | 红绿灯 |
 | `creative/` | 有点子 | 还没有屏幕上的活动 | 一张纸：画一辆我自己的车 |

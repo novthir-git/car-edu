@@ -40,7 +40,18 @@
           `<td><span class="bar"><i style="width:${Math.round(x.freeMs / max * 100)}%"></i></span> ${U.dur(x.freeMs)}</td>` +
           `<td>${U.dur(x.ms)}</td><td>${x.quit} / ${x.plays}</td><td>${pct(x.s, x.n)}</td></tr>`;
       }).join('') + `</tbody></table>` +
-      `<p class="muted">怎么看：“自由玩”是他自己选的，最能说明兴趣；“中途退出”多，可能是太难或不喜欢。故事、涂色没有对错，所以没有答对率。记录少于两周时只能当参考。</p>`;
+      `<p class="muted">怎么看：“自由玩”是他自己选的，最能说明兴趣；“中途退出”多，可能是太难或不喜欢。故事、涂色没有对错，所以没有答对率。记录少于两周时只能当参考。</p>` +
+      whys();
+  }
+
+  // “问为什么”里他点过哪些、点了几次：他好奇什么，下一批就先讲什么
+  function whys() {
+    const picked = (CE.WHYS || []).map(q => ({ q: q.q, n: (S.data.items['why:' + q.k] || {}).n || 0 })).filter(x => x.n)
+      .sort((a, b) => b.n - a.n);
+    return `<h3>他点过的“为什么”</h3>` +
+      (picked.length ? `<div class="chips">${picked.map(x => `<span class="tag">${U.esc(x.q)}　${x.n} 次</span>`).join('')}</div>`
+        : `<p class="muted">还没点过。“问为什么”在自由玩的“科学”里。</p>`) +
+      `<p class="muted">屏幕上的问题是做的人先挑的。他自己问出来的“为什么”，请记在观察笔记里，下一批先讲他真问过的。</p>`;
   }
 
   function zh() {
